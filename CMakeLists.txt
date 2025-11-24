@@ -16,15 +16,19 @@ add_subdirectory(third_party/googletest)
 # ---- Test executable ----
 add_executable(
     test_matrix_construct
-    tests/test_matrix_construct.cpp
+    tests/unit/test_matrix_construct.cpp
 )
 add_executable(
     test_matrix_ops
-    tests/test_matrix_ops.cpp
+    tests/unit/test_matrix_ops.cpp
 )
 add_executable(
     test_matrix_mult
-    tests/test_matrix_mult.cpp
+    tests/unit/test_matrix_mult.cpp
+)
+add_executable(
+    test_benchmark
+    tests/benchmark/test_benchmark.cpp
 )
 
 target_link_libraries(
@@ -33,19 +37,21 @@ target_link_libraries(
     gtest
     gtest_main
 )
-
 target_link_libraries(
     test_matrix_ops PRIVATE
     matrix
     gtest
     gtest_main
 )
-
 target_link_libraries(
     test_matrix_mult PRIVATE
     matrix
     gtest
     gtest_main
+)
+target_link_libraries(
+    test_benchmark PRIVATE
+    matrix
 )
 
 enable_testing()
