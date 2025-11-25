@@ -25,6 +25,8 @@ class Matrix {
         // Getters
         std::size_t rows() const noexcept { return rows_; }
         std::size_t cols() const noexcept { return cols_; }
+        const T* data() const noexcept { return data_.data(); }
+        T* data() noexcept { return data_.data(); }
 
         // Operators
         Matrix<T> operator*(const Matrix<T>& other) const;

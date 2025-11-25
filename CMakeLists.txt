@@ -3,6 +3,7 @@ project(MatrixProject CXX)
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories(include)
+find_library(OPENBLAS_LIB NAMES openblas REQUIRED)
 
 add_library(
     matrix STATIC 
@@ -52,6 +53,7 @@ target_link_libraries(
 target_link_libraries(
     test_benchmark PRIVATE
     matrix
+    ${OPENBLAS_LIB}
 )
 
 enable_testing()
