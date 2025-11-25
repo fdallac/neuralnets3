@@ -20,15 +20,7 @@ int main() {
         }
     }
 
-    // // Benchmark OpenBLAS matrix multiplication
-    // double time_openblas = Benchmark::measure([&]() {
-    //     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-    //         N, N, N, 1.0, A.data(), N, B.data(), N, 0.0, C2.data(), N);
-    // });
-
-    // Create result buffers for OpenBLAS
-
-
+ 
     // Benchmark OpenBLAS matrix multiplication
     double time_openblas = Benchmark::measure([&]() {
         Matrix<double> C2(N, N);
