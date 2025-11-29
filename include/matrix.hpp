@@ -35,6 +35,9 @@ class Matrix {
         bool operator==(const Matrix<T>& other) const;
         bool operator!=(const Matrix<T>& other) const;
 
+        // Transpose
+        Matrix<T> transpose() const;
+
 
     private:
         std::size_t rows_, cols_;

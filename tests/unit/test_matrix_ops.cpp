@@ -50,6 +50,26 @@ TEST(MatrixOperations, MatrixEquality) {
 }
 
 
+TEST(MatrixOperations, MatrixTranspose) {
+    std::vector<int> dataA = {
+        1, 2, 3,
+        4, 5, 6
+    };
+    Matrix<int> A(2, 3, dataA);
+    
+    Matrix<int> At = A.transpose();
+    
+    EXPECT_EQ(At.rows(), 3);
+    EXPECT_EQ(At.cols(), 2);
+    EXPECT_EQ(At(0, 0), 1);
+    EXPECT_EQ(At(0, 1), 4);
+    EXPECT_EQ(At(1, 0), 2);
+    EXPECT_EQ(At(1, 1), 5);
+    EXPECT_EQ(At(2, 0), 3);
+    EXPECT_EQ(At(2, 1), 6);
+}
+
+
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);

@@ -96,6 +96,18 @@ bool Matrix<T>::operator!=(const Matrix<T>& other) const {
     return !(*this == other);
 }
 
+template<typename T>
+Matrix<T> Matrix<T>::transpose() const {
+    Matrix<T> result(cols_, rows_);
+    for (std::size_t i = 0; i < rows_; ++i) {
+        for (std::size_t j = 0; j < cols_; ++j) {
+            result(j, i) = (*this)(i, j);
+        }
+    }
+    return result;
+}
+
+
 // Explicit template instantiation for common types
 template class Matrix<int>;
 template class Matrix<double>;
