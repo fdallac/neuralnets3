@@ -7,8 +7,20 @@ extern "C" {
     #include <cblas.h>
 }
 
-int main() {
-    const std::size_t N = 250; // Size of the square matrices
+int main(int argc, char** argv) {
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <matrix_size>\n";
+        return 1;
+    }
+
+    std::size_t N = std::strtoul(argv[1], nullptr, 10);
+    if (N <= 0) {
+        std::cerr << "Error: matrix_size must be a positive integer.\n";
+        return 1;
+    }
+
+    std::cout << "Running benchmark for N = " << N << "...\n";
+
 
     // Initialize matrices A and B with some values
     Matrix<double> A(N, N);
@@ -41,35 +53,38 @@ int main() {
         Matrix<double> C = MatMul<double>::mm(A, B, MatMulMethod::Vanilla);
     });
 
-    // Benchmark loop unrolled by 4 matrix multiplication
-    double time_unrolled4 = Benchmark::measure([&]() {
-        Matrix<double> C = MatMul<double>::mm(A, B, MatMulMethod::LoopUnrolled4);
-    });
+    // // Benchmark loop unrolled by 4 matrix multiplication
+    // double time_unrolled4 = Benchmark::measure([&]() {
+    //     Matrix<double> C = MatMul<double>::mm(A, B, MatMulMethod::LoopUnrolled4);
+    // });
 
     // Benchmark loop unrolled by 4 matrix multiplication
     double time_unrolled8 = Benchmark::measure([&]() {
         Matrix<double> C = MatMul<double>::mm(A, B, MatMulMethod::LoopUnrolled8);
     });
 
-    // Benchmark loop unrolled by n (e.g., 4) matrix multiplication
-    double time_unrolled_n4 = Benchmark::measure([&]() {
-        Matrix<double> C = MatMul<double>::mm(A, B, MatMulMethod::LoopUnrolledN, 4);
+
+    double time_unrolled8_1 = Benchmark::measure([&]() {
+        Matrix<double> C = MatMul<double>::mm_unrolled<8>(A, B);
     });
 
-    // Benchmark loop unrolled by n (e.g., 8) matrix multiplication
-    double time_unrolled_n8 = Benchmark::measure([&]() {
-        Matrix<double> C = MatMul<double>::mm(A, B, MatMulMethod::LoopUnrolledN, 8);
+
+    // Benchmark tiling matrix multiplication
+    double time_tiled = Benchmark::measure([&]() {
+        Matrix<double> C = MatMul<double>::mm(A, B, MatMulMethod::Tiled);
     });
+
 
 
 
     // Output results
     std::cout << "Average time for OpenBLAS MM: " << time_openblas << " ms\n";
     std::cout << "Average time for Vanilla MM: " << time_vanilla << " ms\n";
-    std::cout << "Average time for Loop Unrolled by 4 MM: " << time_unrolled4 << " ms\n";
+    // std::cout << "Average time for Loop Unrolled by 4 MM: " << time_unrolled4 << " ms\n";
     std::cout << "Average time for Loop Unrolled by 8 MM: " << time_unrolled8 << " ms\n";
-    std::cout << "Average time for Loop Unrolled by n (e.g., 4) MM: " << time_unrolled_n4 << " ms\n";
-    std::cout << "Average time for Loop Unrolled by n (e.g., 8) MM: " << time_unrolled_n8 << " ms\n";
+    std::cout << "Average time for Loop Unrolled by n (e.g., 8) MM: " << time_unrolled8_1 << " ms\n";
+    // std::cout << "Average time for Loop Unrolled by n (e.g., 8) MM: " << time_unrolled_n8 << " ms\n";
+    std::cout << "Average time for Tiled MM: " << time_tiled << " ms\n";
 
     return 0;
 }
