@@ -1,6 +1,9 @@
 #pragma once
 
 #include "matrix.hpp"
+#if defined(_OPENMP)
+    #include <omp.h>
+#endif
 
 
 enum class MatMulMethod {
@@ -43,6 +46,9 @@ public:
 
             case MatMulMethod::Tiled:
                 return mm_tiled<16>(A, B);
+
+            case MatMulMethod::OpenMP:
+                return mm_openmp(A, B);
             
             // Future methods can be added here
             default:
@@ -254,15 +260,58 @@ public:
 
 
     /// TODO: Placeholder for OpenMP implementation
-    static Matrix<T> mm_openmp(const Matrix<T>& A, const Matrix<T>& B) {
+
+
+    static Matrix<T> mm_openmp(const Matrix<T>& A, const Matrix<T>& B, int num_threads = -1, size_t block_k = 64) {
         if (A.cols() != B.rows()) {
             throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
         }
         Matrix<T> C(A.rows(), B.cols());
 
-        // OpenMP implementation would go here
+        // Run OpenMP implementation for matrix pointers
+        mm_openmp_ptr(A, B, C, num_threads, block_k);
 
         return C;
+    }
+
+    /// Private helper for OpenMP implementation using raw pointers
+    static void mm_openmp_ptr(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C, int num_threads = -1, size_t block_k = 64) {
+        const std::size_t M = A.rows();
+        const std::size_t N = B.cols();
+        const std::size_t K = A.cols();
+        const T* A_data = A.data();
+        const T* B_data = B.data();
+        T* C_data = C.data();
+
+        // Warning if openmp is not enabled
+        #if !defined(_OPENMP)
+            #warning "OpenMP is not enabled. Compiling without OpenMP support."
+        #endif
+
+        // Set number of threads
+        #if defined(_OPENMP)
+            if (num_threads <= 0) {
+                num_threads = omp_get_max_threads();
+            }
+            omp_set_num_threads(num_threads);
+        #endif
+
+        // Parallelize outer loop with OpenMP
+        #if defined(_OPENMP)
+            #pragma omp parallel for schedule(static)
+        #endif
+            for (std::size_t i = 0; i < M; ++i) {
+                for (std::size_t j = 0; j < N; ++j) {
+                    T sum = T{};
+                    for (std::size_t k = 0; k < K; k += block_k) {
+                        std::size_t k_max = std::min(k + block_k, K);
+                        for (std::size_t kk = k; kk < k_max; ++kk) {
+                            sum += A_data[i * K + kk] * B_data[kk * N + j];
+                        }
+                    }
+                    C_data[i * N + j] = sum;
+                }
+            }
     }
 
 

@@ -182,6 +182,31 @@ TEST(MatrixMultiplication, TiledMultiplication) {
 }
 
 
+TEST(MatrixMultiplication, OpenMP_Multiplication) {
+    std::vector<int> dataA = {
+        1, 2, 3, 4,
+        5, 6, 7, 8,
+        9, 10, 11, 12,
+        13, 14, 15, 16
+    };
+    std::vector<int> dataB = {
+        17, 18, 19, 20,
+        21, 22, 23, 24,
+        25, 26, 27, 28,
+        29, 30, 31, 32
+    };
+    Matrix<int> A(4, 4, dataA);
+    Matrix<int> B(4, 4, dataB);
+    
+    Matrix<int> C = MatMul<int>::mm_openmp(A, B);
+    Matrix<int> D = MatMul<int>::mm(A, B); // Using default multiplication for verification
+    
+    EXPECT_EQ(C.rows(), 4);
+    EXPECT_EQ(C.cols(), 4);
+    EXPECT_TRUE(C == D);
+}
+
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

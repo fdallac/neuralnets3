@@ -73,6 +73,12 @@ int main(int argc, char** argv) {
     double time_tiled = Benchmark::measure([&]() {
         Matrix<double> C = MatMul<double>::mm(A, B, MatMulMethod::Tiled);
     });
+    
+
+    // Benchmark OpenMP matrix multiplication
+    double time_openmp = Benchmark::measure([&]() {
+        Matrix<double> C = MatMul<double>::mm_openmp(A, B);
+    });
 
 
 
@@ -85,6 +91,7 @@ int main(int argc, char** argv) {
     std::cout << "Average time for Loop Unrolled by n (e.g., 8) MM: " << time_unrolled8_1 << " ms\n";
     // std::cout << "Average time for Loop Unrolled by n (e.g., 8) MM: " << time_unrolled_n8 << " ms\n";
     std::cout << "Average time for Tiled MM: " << time_tiled << " ms\n";
+    std::cout << "Average time for OpenMP MM: " << time_openmp << " ms\n";
 
     return 0;
 }

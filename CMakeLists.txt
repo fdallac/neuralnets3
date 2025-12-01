@@ -3,7 +3,13 @@ project(MatrixProject CXX)
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories(include)
+
+# --- OpenMP ---
+find_package(OpenMP REQUIRED)
+
+# --- OpenBLAS ---
 find_library(OPENBLAS_LIB NAMES openblas REQUIRED)
+
 
 add_library(
     matrix STATIC 
@@ -33,6 +39,11 @@ add_executable(
 )
 
 target_link_libraries(
+    matrix PRIVATE
+    OpenMP::OpenMP_CXX
+)
+
+target_link_libraries(
     test_matrix_construct PRIVATE
     matrix
     gtest
@@ -49,6 +60,7 @@ target_link_libraries(
     matrix
     gtest
     gtest_main
+    OpenMP::OpenMP_CXX
 )
 target_link_libraries(
     test_benchmark PRIVATE
@@ -57,6 +69,6 @@ target_link_libraries(
 )
 
 enable_testing()
-add_test(NAME MatrixConstructTest COMMAND test_matrix_construct)
-add_test(NAME MatrixOpsTest COMMAND test_matrix_ops)
-add_test(NAME MatrixMultTest COMMAND test_matrix_mult)
+add_test(NAME MatrixConstructTest   COMMAND test_matrix_construct)
+add_test(NAME MatrixOpsTest         COMMAND test_matrix_ops)
+add_test(NAME MatrixMultTest        COMMAND test_matrix_mult)   
