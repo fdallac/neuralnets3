@@ -56,13 +56,19 @@ class NeuralNets {
         static Matrix<T> apply_activation_derivative(const Matrix<T>& M, const std::string& activation);
     
 
+        /// @brief Calculate loss function between predictions and targets
+        /// @param predictions Predicted output matrix
+        /// @param targets Target output matrix
+        /// @param loss_function Loss function to use ("mse", "cross_entropy")
+        /// @return Computed loss value
+        static T compute_loss(const Matrix<T>& predictions, const Matrix<T>& targets, const std::string& loss_function);
 
 
-
-
-
-
-
-
+        /// @brief Calculate gradient of loss function with respect to predictions
+        /// @param predictions Predicted output matrix
+        /// @param targets Target output matrix
+        /// @param loss_function Loss function to use ("mse", "cross_entropy")
+        /// @return Gradient matrix
+        static Matrix<T> compute_loss_gradient(const Matrix<T>& predictions, const Matrix<T>& targets, const std::string& loss_function);
 
   };
