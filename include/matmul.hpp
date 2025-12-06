@@ -28,7 +28,7 @@ public:
     /// @param A Left-hand side matrix
     /// @param B Right-hand side matrix
     /// @param method Method to use for multiplication (default: Vanilla)
-    /// @return Resulting matrix after multiplication
+    /// @return C = A * B
     static Matrix<T> mm(const Matrix<T>& A, const Matrix<T>& B,
                  MatMulMethod method = MatMulMethod::Vanilla) { 
         switch (method) {
@@ -64,7 +64,7 @@ public:
     /// @brief  Vanilla matrix multiplication
     /// @param A 
     /// @param B
-    /// @return Resulting matrix after multiplication
+    /// @return C = A * B
     static Matrix<T> mm_vanilla(const Matrix<T>& A, const Matrix<T>& B) {
         if (A.cols() != B.rows()) {
             throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
@@ -161,7 +161,7 @@ public:
     /// @tparam N_UNROLL
     /// @param A 
     /// @param B
-    /// @return Resulting matrix after multiplication
+    /// @return C = A * B
     template<std::size_t N_UNROLL>
     static Matrix<T> mm_unrolled(const Matrix<T>& A, const Matrix<T>& B) {
         if (A.cols() != B.rows()) {
@@ -201,7 +201,7 @@ public:
     /// @tparam TILE_SIZE 
     /// @param A 
     /// @param B 
-    /// @return Resulting matrix after multiplication
+    /// @return C = A * B
     template<std::size_t TILE_SIZE>
     static Matrix<T> mm_tiled(const Matrix<T>& A, const Matrix<T>& B) {
         if (A.cols() != B.rows()) {
@@ -259,9 +259,12 @@ public:
     }
 
 
-    /// TODO: Placeholder for OpenMP implementation
-
-
+    /// @brief  OpenMP parallelized matrix multiplication
+    /// @param A
+    /// @param B
+    /// @param num_threads Number of threads to use (-1 for max available)
+    /// @param block_k Block size for the K dimension
+    /// @return C = A * B
     static Matrix<T> mm_openmp(const Matrix<T>& A, const Matrix<T>& B, int num_threads = -1, size_t block_k = 64) {
         if (A.cols() != B.rows()) {
             throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
