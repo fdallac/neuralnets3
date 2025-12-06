@@ -83,6 +83,12 @@ int main(int argc, char** argv) {
     });
 
 
+    // Benchmark Optimized matrix multiplication
+    double time_optimized = Benchmark::measure([&]() {
+        Matrix<double> C = MatMul<double>::mm(A, B, MatMulMethod::Optimized);
+    });
+
+
 
 
     // Output results
@@ -90,11 +96,12 @@ int main(int argc, char** argv) {
     std::cout << "Average time for Vanilla MM: " << time_vanilla << " ms\n";
     // std::cout << "Average time for Loop Unrolled by 4 MM: " << time_unrolled4 << " ms\n";
     std::cout << "Average time for Loop Unrolled by 8 MM: " << time_unrolled8 << " ms\n";
-    std::cout << "Average time for Loop Unrolled by n (e.g., 8) MM: " << time_unrolled8_1 << " ms\n";
+    std::cout << "Average time for Loop Unrolled by n (n = 8) MM: " << time_unrolled8_1 << " ms\n";
     // std::cout << "Average time for Loop Unrolled by n (e.g., 8) MM: " << time_unrolled_n8 << " ms\n";
     std::cout << "Average time for Tiled MM: " << time_tiled << " ms\n";
     std::cout << "Average time for OpenMP MM: " << time_openmp << " ms\n";
     std::cout << "Average time for SIMD (AVX-512) MM: " << time_avx512 << " ms\n";
+    std::cout << "Average time for Optimized MM: " << time_optimized << " ms\n";
 
     return 0;
 }

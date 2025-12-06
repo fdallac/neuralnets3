@@ -16,6 +16,7 @@ enum class MatMulMethod {
     SIMD_AVX2,
     SIMD_AVX512,
     OpenMP,
+    Optimized,
     CUDA
 };
 
@@ -53,6 +54,9 @@ public:
 
             case MatMulMethod::SIMD_AVX512:
                 return mm_avx512(A, B);
+
+            case MatMulMethod::Optimized:
+                return mm_optimized(A, B);
             
             // Future methods can be added here
             default:
@@ -412,6 +416,119 @@ public:
                 }
             }
     }
+
+
+
+    /// @brief Matrix multiplication merging OpenMP, AVX-512, and Tiling
+    /// @param A
+    /// @param B
+    /// @param num_threads Number of threads to use (-1 for max available)
+    /// @param tile_i Tile size for the i dimension
+    /// @param tile_j Tile size for the j dimension
+    /// @param tile_k Tile size for the k dimension
+    /// @return C = A * B
+    static Matrix<T> mm_optimized(const Matrix<T>& A, const Matrix<T>& B, int num_threads = -1, size_t tile_i = 16, size_t tile_j = 16, size_t tile_k = 64) {
+        if (A.cols() != B.rows()) {
+            throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
+        }
+
+        const size_t M = A.rows();
+        const size_t N = B.cols();
+        const size_t K = A.cols();
+
+        Matrix<T> C(M, N);
+
+        // Transpose B for better memory access
+        Matrix<T> B_t = B.transpose();
+
+        // Optimized implementation would go here
+        mm_optimized_ptr(A.data(), B_t.data(), C.data(), M, N, K, num_threads, tile_i, tile_j, tile_k);
+
+        return C;
+    }
+
+
+    static void mm_optimized_ptr(const T* A, const T* B_t, T* C, size_t M, size_t N, size_t K, int num_threads = -1, size_t tile_i = 16, size_t tile_j = 16, size_t tile_k = 64) {
+        
+        
+        # if defined(_OPENMP)
+            if (num_threads <= 0) {
+                num_threads = omp_get_max_threads();
+            }
+            omp_set_num_threads(num_threads);
+        # endif
+
+        #if defined(_OPENMP)
+            #pragma omp parallel for schedule(static)
+        #endif
+
+        for (size_t ii = 0; ii < M; ii += tile_i) {
+            size_t i_max = std::min(ii + tile_i, M);
+            
+            for (size_t jj = 0; jj < N; jj += tile_j) {
+                size_t j_max = std::min(jj + tile_j, N);
+                
+                for (size_t kk = 0; kk < K; kk += tile_k) {
+                    size_t k_max = std::min(kk + tile_k, K);
+                
+                    // Multiply the tiles
+                    for (size_t i = ii; i < i_max; ++i) {   
+                        const T* arow = A + i * K;
+
+                        for (size_t j = jj; j < j_max; ++j) {
+                            const T* brow = B_t + j * K;
+
+                            // SIMD blocks
+                            if constexpr (std::is_same_v<T, float>) {
+                                __m512 acc = _mm512_setzero_ps();
+                                size_t k = kk;
+                                constexpr size_t V = 16;
+                                for (; k + V <= k_max; k += V) {
+                                    __m512 va = _mm512_loadu_ps(arow + k);
+                                    __m512 vb = _mm512_loadu_ps(brow + k);
+                                    acc = _mm512_fmadd_ps(va, vb, acc);
+                                }
+                                float tmp[16];
+                                _mm512_storeu_ps(tmp, acc);
+                                float sum = 0;
+                                for (size_t t = 0; t < V; ++t) sum += tmp[t];
+                                for (; k < k_max; ++k) sum += arow[k] * brow[k];
+                                C[i * N + j] += sum;
+                            } else if constexpr (std::is_same_v<T, double>) {
+                                __m512d acc = _mm512_setzero_pd();
+                                size_t k = kk;
+                                constexpr size_t V = 8;
+                                for (; k + V <= k_max; k += V) {
+                                    __m512d va = _mm512_loadu_pd(arow + k);
+                                    __m512d vb = _mm512_loadu_pd(brow + k);
+                                    acc = _mm512_fmadd_pd(va, vb, acc);
+                                }
+                                double tmp[8];
+                                _mm512_storeu_pd(tmp, acc);
+                                double sum = 0;
+                                for (size_t t = 0; t < V; ++t) sum += tmp[t];
+                                for (; k < k_max; ++k) sum += arow[k] * brow[k];
+                                C[i * N + j] += sum;
+                            } else {
+                                // Fallback to scalar multiplication for unsupported types
+                                T sum = T{};
+                                for (size_t k = kk; k < k_max; ++k) {
+                                    sum += arow[k] * brow[k];
+                                }
+                                C[i * N + j] += sum;
+                            }
+                        }
+                    }
+                }
+            }
+            
+        }
+
+    }
+    
+
+
+
 
 
     /// TODO: Placeholder for CUDA implementation
