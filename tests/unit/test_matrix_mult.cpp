@@ -207,6 +207,27 @@ TEST(MatrixMultiplication, OpenMP_Multiplication) {
 }
 
 
+
+TEST(MatrixMultiplication, SIMD_Multiplication) {
+    std::vector<float> dataA(32);
+    std::vector<float> dataB(32);
+    for (std::size_t i = 0; i < 32; ++i) {
+        dataA[i] = static_cast<float>(i + 1);
+        dataB[i] = static_cast<float>(i + 1);
+    }
+    Matrix<float> A(4, 8, dataA);
+    Matrix<float> B(8, 4, dataB);
+    
+    Matrix<float> C = MatMul<float>::mm_avx512(A, B);
+    Matrix<float> D = MatMul<float>::mm(A, B); // Using default multiplication for verification
+    
+    EXPECT_EQ(C.rows(), 4);
+    EXPECT_EQ(C.cols(), 4);
+    EXPECT_TRUE(C == D);
+}
+
+
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

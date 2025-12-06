@@ -17,6 +17,9 @@ add_library(
     src/matmul.cpp
 )
 
+# ---- Enable AVX-512 ----
+target_compile_options(matrix PUBLIC -mavx512f)
+
 # ---- GoogleTest ----
 add_subdirectory(third_party/googletest)
 

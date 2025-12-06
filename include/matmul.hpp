@@ -4,6 +4,7 @@
 #if defined(_OPENMP)
     #include <omp.h>
 #endif
+#include <immintrin.h>
 
 
 enum class MatMulMethod {
@@ -12,8 +13,8 @@ enum class MatMulMethod {
     LoopUnrolled8,
     LoopUnrolled,
     Tiled,
-    AVX2,
-    AVX512,
+    SIMD_AVX2,
+    SIMD_AVX512,
     OpenMP,
     CUDA
 };
@@ -49,6 +50,9 @@ public:
 
             case MatMulMethod::OpenMP:
                 return mm_openmp(A, B);
+
+            case MatMulMethod::SIMD_AVX512:
+                return mm_avx512(A, B);
             
             // Future methods can be added here
             default:
@@ -253,9 +257,101 @@ public:
         }
         Matrix<T> C(A.rows(), B.cols());
 
-        // AVX512 implementation would go here
+        // Transpose B for better memory access
+        Matrix<T> B_t = B.transpose();
+
+        // Run AVX512 implementation for matrix pointers
+        mm_avx512_transposed_ptr(A.data(), B_t.data(), C.data(), A.rows(), B.cols(), A.cols());
 
         return C;
+    }
+
+    static void mm_avx512_transposed_ptr(const T* A, const T* B_t, T* C, std::size_t M, std::size_t N, std::size_t K) {
+        
+        if constexpr (std::is_same_v<T, float>) {
+            mm_avx512_transpose_float(A, B_t, C, M, N, K);
+        } else if constexpr (std::is_same_v<T, double>) {
+            mm_avx512_transpose_double(A, B_t, C, M, N, K);
+        } else if constexpr (std::is_same_v<T, int>) {
+            mm_avx512_transpose_int(A, B_t, C, M, N, K);
+        } else {
+            throw std::invalid_argument("AVX-512 implementation only supports float and double types");
+        }
+    }
+
+
+    static void mm_avx512_transpose_int(const int* A, const int* B_t, int* C, std::size_t M, std::size_t N, std::size_t K) {
+        constexpr std::size_t V = 16;
+        for (std::size_t i = 0; i < M; ++i) {
+            const int* arow = A + i * K;
+            int* crow = C + i * N;
+            for (std::size_t j = 0; j < N; ++j) {
+                const int* brow = B_t + j * K;
+                __m512i acc = _mm512_setzero_si512();
+                std::size_t k = 0;
+                for (; k + V <= K; k += V) {
+                    __m512i va = _mm512_loadu_si512((__m512i const*)(arow + k));
+                    __m512i vb = _mm512_loadu_si512((__m512i const*)(brow + k));
+                    acc = _mm512_add_epi32(acc, _mm512_mullo_epi32(va, vb));
+                }
+                int tmp[V];
+                _mm512_storeu_si512((__m512i*)tmp, acc);
+                int sum = 0;
+                for (std::size_t t = 0; t < V; ++t) sum += tmp[t];
+                for (; k < K; ++k) sum += arow[k] * brow[k];
+                crow[j] = sum;
+            }
+        }
+    }
+
+
+    static void mm_avx512_transpose_float(const float* A, const float* B_t, float* C, std::size_t M, std::size_t N, std::size_t K) {
+        constexpr std::size_t V = 16;
+        for (std::size_t i = 0; i < M; ++i) {
+            const float* arow = A + i * K;
+            float* crow = C + i * N;
+            for (std::size_t j = 0; j < N; ++j) {
+                const float* brow = B_t + j * K;
+                __m512 acc = _mm512_setzero_ps();
+                std::size_t k = 0;
+                for (; k + V <= K; k += V) {
+                    __m512 va = _mm512_loadu_ps(arow + k);
+                    __m512 vb = _mm512_loadu_ps(brow + k);
+                    acc = _mm512_fmadd_ps(va, vb, acc);
+                }
+                float tmp[V];
+                _mm512_storeu_ps(tmp, acc);
+                float sum = 0;
+                for (std::size_t t = 0; t < V; ++t) sum += tmp[t];
+                for (; k < K; ++k) sum += arow[k] * brow[k];
+                crow[j] = sum;
+            }
+        }
+    }
+
+
+    static void mm_avx512_transpose_double(const double* A, const double* B_t, double* C, std::size_t M, std::size_t N, std::size_t K) {
+        constexpr std::size_t V = 8;
+        for (std::size_t i = 0; i < M; ++i) {
+            const double* arow = A + i * K;
+            double* crow = C + i * N;
+            for (std::size_t j = 0; j < N; ++j) {
+                const double* brow = B_t + j * K;
+                __m512d acc = _mm512_setzero_pd();
+                std::size_t k = 0;
+                for (; k + V <= K; k += V) {
+                    __m512d va = _mm512_loadu_pd(arow + k);
+                    __m512d vb = _mm512_loadu_pd(brow + k);
+                    acc = _mm512_fmadd_pd(va, vb, acc);
+                }
+                double tmp[V];
+                _mm512_storeu_pd(tmp, acc);
+                double sum = 0;
+                for (std::size_t t = 0; t < V; ++t) sum += tmp[t];
+                for (; k < K; ++k) sum += arow[k] * brow[k];
+                crow[j] = sum;
+            }
+        }
     }
 
 
