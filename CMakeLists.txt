@@ -39,7 +39,7 @@ add_executable(
 )
 
 target_link_libraries(
-    matrix PRIVATE
+    matrix PUBLIC
     OpenMP::OpenMP_CXX
 )
 
