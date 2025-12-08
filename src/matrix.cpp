@@ -139,7 +139,7 @@ Matrix<T>& Matrix<T>::operator+_=(const Matrix<T>& other_row_vector) {
 
 
 template<typename T>
-Matrix<T> Matrix<T>::operator*.(const Matrix<T>& other) const {
+Matrix<T> Matrix<T>::operator.*(const Matrix<T>& other) const {
     if (rows_ != other.rows() || cols_ != other.cols()) {
         throw std::invalid_argument("Matrix dimensions do not match for element-wise multiplication");
     }
@@ -154,7 +154,7 @@ Matrix<T> Matrix<T>::operator*.(const Matrix<T>& other) const {
 
 
 template<typename T>
-Matrix<T>& Matrix<T>::operator*.=(const Matrix<T>& other) {
+Matrix<T>& Matrix<T>::operator.*=(const Matrix<T>& other) {
     if (rows_ != other.rows() || cols_ != other.cols()) {
         throw std::invalid_argument("Matrix dimensions do not match for element-wise multiplication");
     }
@@ -216,6 +216,33 @@ Matrix<T> Matrix<T>::apply(T (*func)(T)) const {
     return result;
 }
 
+
+template<typename T>
+Matrix<T> Matrix<T>::vertical_sum() const {
+    Matrix<T> result(rows_, 1);
+    for (std::size_t i = 0; i < rows_; ++i) {
+        T sum = T{};
+        for (std::size_t j = 0; j < cols_; ++j) {
+            sum += (*this)(i, j);
+        }
+        result(i, 0) = sum;
+    }
+    return result;
+}
+
+
+template<typename T>
+Matrix<T> Matrix<T>::horizontal_sum() const { 
+    Matrix<T> result(1, cols_);
+    for (std::size_t j = 0; j < cols_; ++j) {
+        T sum = T{};
+        for (std::size_t i = 0; i < rows_; ++i) {
+            sum += (*this)(i, j);
+        }
+        result(0, j) = sum;
+    }
+    return result;
+}
 
 
 

@@ -42,8 +42,8 @@ class Matrix {
         Matrix<T>& operator+|=(const Matrix<T>& other_col_vector); // In-place matrix addition with column vector broadcast
         Matrix<T> operator+_(const Matrix<T>& other_row_vector) const; // Matrix addition with a row vector broadcast
         Matrix<T>& operator+_=(const Matrix<T>& other_row_vector); // In-place matrix addition with row vector broadcast
-        Matrix<T> operator*.(const Matrix<T>& other) const; // Element-wise multiplication
-        Matrix<T>& operator*.=(const Matrix<T>& other); // In-place element-wise multiplication
+        Matrix<T> operator.*(const Matrix<T>& other) const; // Element-wise multiplication
+        Matrix<T>& operator.*=(const Matrix<T>& other); // In-place element-wise multiplication
         
         bool operator==(const Matrix<T>& other) const; // Equality check
         bool operator!=(const Matrix<T>& other) const; // Inequality check
@@ -53,6 +53,10 @@ class Matrix {
 
         // Apply function element-wise
         Matrix<T> apply(T (*func)(T)) const;
+
+        // Row and column sums
+        Matrix<T> horizontal_sum() const; // Returns a row vector
+        Matrix<T> vertical_sum() const; // Returns a column vector
 
 
     private:
