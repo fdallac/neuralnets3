@@ -4,7 +4,13 @@
 #include "loss.hpp"
 #include "optimizer.hpp"
 
-
+template<typename T>
+class NeuralLayer {
+    public:
+        Matrix<T> W, b, dW, db, Z;
+        Activation<T> activation;
+        NeuralLayer(std::size_t input_size, std::size_t output_size, const Activation<T>& activation);
+};
 
 template<typename T>
 class NeuralNets {
@@ -49,20 +55,17 @@ class NeuralNets {
 
     private:
         static int n_layers;
-        static std::vector<Matrix<T>> weights;
-        static std::vector<Matrix<T>> bias;
-        static std::vector<Activation> activations;
+        static std::vector<NeuralLayer<T>> layers;
+        
         static Optimizer<T> optimizer;
         static Loss<T> loss_function;
 
 
         /// @brief Example public method: Forward pass through a layer
         /// @param X Input matrix
-        /// @param weights Weights matrix
-        /// @param bias Bias matrix
-        /// @param activation Activation function to apply ("relu", "sigmoid", "tanh", "identity")
-        /// @return Output matrix after applying weights, bias, and activation
-        static Matrix<T> forward_pass(const Matrix<T>& X, const Matrix<T>& weights, const Matrix<T>& bias, const Activation& activation);
+        /// @param layer 
+        /// @return Output matrix after forward pass
+        static Matrix<T> forward_pass(const Matrix<T>& X, const NeuralLayer<T>& layer);
 
 
         /// @brief  Example method: Backward pass through a layer (stub implementation)
@@ -71,6 +74,6 @@ class NeuralNets {
         /// @param weights 
         /// @param bias 
         /// @param activation 
-        static Matrix<T> backward_pass(const Matrix<T>& gradient, const Matrix<T>& weights, const Matrix<T>& bias, const Activation<T>& activation);
+        static Matrix<T> backward_pass(const Matrix<T>& gradient, const NeuralLayer<T>& layer);
 
 };  
