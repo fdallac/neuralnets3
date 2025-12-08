@@ -63,6 +63,7 @@ Matrix<T> Matrix<T>::operator+(const Matrix<T>& other) const {
     return result;
 }
 
+
 template<typename T>
 Matrix<T>& Matrix<T>::operator+=(const Matrix<T>& other) {
     if (rows_ != other.rows() || cols_ != other.cols()) {
@@ -75,6 +76,98 @@ Matrix<T>& Matrix<T>::operator+=(const Matrix<T>& other) {
     }
     return *this;
 }
+
+
+template<typename T>Matrix<T> Matrix<T>::operator+|(const Matrix<T>& other_col_vector) const {
+    if (other_col_vector.cols() != 1 || other_col_vector.rows() != rows_) {
+        throw std::invalid_argument("Column vector dimensions do not match for broadcasting addition");
+    }
+
+    Matrix<T> result(rows_, cols_);
+    for (std::size_t i = 0; i < rows_; ++i) {
+        for (std::size_t j = 0; j < cols_; ++j) {
+            result(i, j) = (*this)(i, j) + other_col_vector(i, 0);
+        }
+    }
+    return result;
+}
+
+
+template<typename T>Matrix<T>& Matrix<T>::operator+|=(const Matrix<T>& other_col_vector) {
+    if (other_col_vector.cols() != 1 || other_col_vector.rows() != rows_) {
+        throw std::invalid_argument("Column vector dimensions do not match for broadcasting addition");
+    }
+    for (std::size_t i = 0; i < rows_; ++i) {
+        for (std::size_t j = 0; j < cols_; ++j) {
+            (*this)(i, j) += other_col_vector(i, 0);
+        }
+    }
+    return *this;
+}
+
+
+template<typename T>
+Matrix<T> Matrix<T>::operator+_(const Matrix<T>& other_row_vector) const {
+    if (other_row_vector.rows() != 1 || other_row_vector.cols() != cols_) {
+        throw std::invalid_argument("Row vector dimensions do not match for broadcasting addition");
+    }
+
+    Matrix<T> result(rows_, cols_);
+    for (std::size_t i = 0; i < rows_; ++i) {
+        for (std::size_t j = 0; j < cols_; ++j) {
+            result(i, j) = (*this)(i, j) + other_row_vector(0, j);
+        }
+    }
+    return result;
+}
+
+
+
+template<typename T>
+Matrix<T>& Matrix<T>::operator+_=(const Matrix<T>& other_row_vector) {
+    if (other_row_vector.rows() != 1 || other_row_vector.cols() != cols_) {
+        throw std::invalid_argument("Row vector dimensions do not match for broadcasting addition");
+    }
+    for (std::size_t i = 0; i < rows_; ++i) {
+        for (std::size_t j = 0; j < cols_; ++j) {
+            (*this)(i, j) += other_row_vector(0, j);
+        }
+    }
+    return *this;
+}
+
+
+
+template<typename T>
+Matrix<T> Matrix<T>::operator*.(const Matrix<T>& other) const {
+    if (rows_ != other.rows() || cols_ != other.cols()) {
+        throw std::invalid_argument("Matrix dimensions do not match for element-wise multiplication");
+    }
+    Matrix<T> result(rows_, cols_);
+    for (std::size_t i = 0; i < rows_; ++i) {
+        for (std::size_t j = 0; j < cols_; ++j) {
+            result(i, j) = (*this)(i, j) * other(i, j);
+        }
+    }
+    return result;
+}
+
+
+template<typename T>
+Matrix<T>& Matrix<T>::operator*.=(const Matrix<T>& other) {
+    if (rows_ != other.rows() || cols_ != other.cols()) {
+        throw std::invalid_argument("Matrix dimensions do not match for element-wise multiplication");
+    }
+    for (std::size_t i = 0; i < rows_; ++i) {
+        for (std::size_t j = 0; j < cols_; ++j) {
+            (*this)(i, j) *= other(i, j);
+        }
+    }
+    return *this;
+}
+
+
+
 
 template<typename T>
 bool Matrix<T>::operator==(const Matrix<T>& other) const {
@@ -106,6 +199,8 @@ Matrix<T> Matrix<T>::transpose() const {
     }
     return result;
 }
+
+
 
 
 // Explicit template instantiation for common types

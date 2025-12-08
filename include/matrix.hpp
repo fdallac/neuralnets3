@@ -29,11 +29,24 @@ class Matrix {
         T* data() noexcept { return data_.data(); }
 
         // Operators
-        Matrix<T> operator*(const Matrix<T>& other) const;
-        Matrix<T> operator+(const Matrix<T>& other) const;
-        Matrix<T>& operator+=(const Matrix<T>& other);
-        bool operator==(const Matrix<T>& other) const;
-        bool operator!=(const Matrix<T>& other) const;
+        Matrix<T> operator*(const Matrix<T>& other) const; // Matrix multiplication
+        Matrix<T> operator+(const Matrix<T>& other) const; // Matrix addition
+        Matrix<T>& operator+=(const Matrix<T>& other); // In-place addition
+        // Matrix<T> operator-(const Matrix<T>& other) const; // Matrix subtraction
+        // Matrix<T>& operator-=(const Matrix<T>& other); // In-place subtraction
+        // Matrix<T> operator*(T scalar) const; // Scalar multiplication
+        // Matrix<T>& operator*=(T scalar); // In-place scalar multiplication
+        // Matrix<T> operator/(T scalar) const; // Scalar division
+        // Matrix<T>& operator/=(T scalar); // In-place scalar division
+        Matrix<T> operator+|(const Matrix<T>& other_col_vector) const; // Matrix addition with a column vector broadcast
+        Matrix<T>& operator+|=(const Matrix<T>& other_col_vector); // In-place matrix addition with column vector broadcast
+        Matrix<T> operator+_(const Matrix<T>& other_row_vector) const; // Matrix addition with a row vector broadcast
+        Matrix<T>& operator+_=(const Matrix<T>& other_row_vector); // In-place matrix addition with row vector broadcast
+        Matrix<T> operator*.(const Matrix<T>& other) const; // Element-wise multiplication
+        Matrix<T>& operator*.=(const Matrix<T>& other); // In-place element-wise multiplication
+        
+        bool operator==(const Matrix<T>& other) const; // Equality check
+        bool operator!=(const Matrix<T>& other) const; // Inequality check
 
         // Transpose
         Matrix<T> transpose() const;

@@ -1,36 +1,68 @@
 #pragma once
 #include "matrix.hpp"
-#include "activations.hpp"
+#include "activation.hpp"
+#include "loss.hpp"
+#include "optimizer.hpp"
+
 
 
 template<typename T>
 class NeuralNets {
 
     public:
-        NeuralNets(std::string optimizer = "sgd", T learning_rate = T{0.01});
+        NeuralNets(Optimizer<T> optimizer, Loss<T> loss_function);
 
-        static void add_layer(size_t input_size, size_t output_size, const std::string& activation);
+        /// @brief Add a new layer to the neural network   
+        /// @param input_size 
+        /// @param output_size 
+        /// @param activation 
+        static void add_layer(size_t input_size, size_t output_size, const Activation& activation);
 
-        static void train(const Matrix<T>& input, const Matrix<T>& target, std::size_t epochs, T learning_rate);
 
-        static Matrix<T> predict(const Matrix<T>& input);
+        /// @brief Train the neural network
+        /// @param X Input data matrix
+        /// @param y Target data matrix
+        /// @param epochs Number of training epochs
+        /// @param verbose Whether to print training progress
+        static void train(const Matrix<T>& X, const Matrix<T>& y, std::size_t epochs, bool verbose = true);
 
+
+        /// @brief Predict using the trained neural network
+        /// @param X Input data matrix
+        /// @return Predicted output matrix
+        static Matrix<T> predict(const Matrix<T>& X);
+
+
+        /// @brief Set the optimizer for the neural network
+        /// @param optimizer
+        static void set_optimizer(const Optimizer<T>& optimizer) {
+            this->optimizer = optimizer;
+        }
+
+
+        /// @brief Set the loss function for the neural network
+        /// @param loss_function
+        static void set_loss_function(const Loss<T>& loss_function) {
+            this->loss_function = loss_function;
+        }
 
 
     private:
         static int n_layers;
         static std::vector<Matrix<T>> weights;
         static std::vector<Matrix<T>> bias;
-        static std::vector<std::string> activations;
+        static std::vector<Activation> activations;
+        static Optimizer<T> optimizer;
+        static Loss<T> loss_function;
 
 
         /// @brief Example public method: Forward pass through a layer
-        /// @param input Input matrix
+        /// @param X Input matrix
         /// @param weights Weights matrix
         /// @param bias Bias matrix
         /// @param activation Activation function to apply ("relu", "sigmoid", "tanh", "identity")
         /// @return Output matrix after applying weights, bias, and activation
-        static Matrix<T> forward_pass(const Matrix<T>& input, const Matrix<T>& weights, const Matrix<T>& bias, const std::string& activation);
+        static Matrix<T> forward_pass(const Matrix<T>& X, const Matrix<T>& weights, const Matrix<T>& bias, const Activation& activation);
 
 
         /// @brief  Example method: Backward pass through a layer (stub implementation)
@@ -39,36 +71,6 @@ class NeuralNets {
         /// @param weights 
         /// @param bias 
         /// @param activation 
-        static Matrix<T> backward_pass(const Matrix<T>& output, const Matrix<T>& target, const Matrix<T>& weights, const Matrix<T>& bias, const std::string& activation);
+        static Matrix<T> backward_pass(const Matrix<T>& gradient, const Matrix<T>& weights, const Matrix<T>& bias, const Activation<T>& activation);
 
-
-        /// @brief Example method: Apply activation function to a matrix
-        /// @param M Input matrix
-        /// @param activation Activation function ("relu", "sigmoid", "tanh", "identity")
-        /// @return Matrix after applying activation function
-        static Matrix<T> apply_activation(const Matrix<T>& M, const std::string& activation);
-
-
-        /// @brief Apply the derivative of an activation function to a matrix
-        /// @param M Input matrix
-        /// @param activation Activation function ("relu", "sigmoid", "tanh", "identity")
-        /// @return Matrix after applying the derivative of the activation function
-        static Matrix<T> apply_activation_derivative(const Matrix<T>& M, const std::string& activation);
-    
-
-        /// @brief Calculate loss function between predictions and targets
-        /// @param predictions Predicted output matrix
-        /// @param targets Target output matrix
-        /// @param loss_function Loss function to use ("mse", "cross_entropy")
-        /// @return Computed loss value
-        static T compute_loss(const Matrix<T>& predictions, const Matrix<T>& targets, const std::string& loss_function);
-
-
-        /// @brief Calculate gradient of loss function with respect to predictions
-        /// @param predictions Predicted output matrix
-        /// @param targets Target output matrix
-        /// @param loss_function Loss function to use ("mse", "cross_entropy")
-        /// @return Gradient matrix
-        static Matrix<T> compute_loss_gradient(const Matrix<T>& predictions, const Matrix<T>& targets, const std::string& loss_function);
-
-  };
+};  
