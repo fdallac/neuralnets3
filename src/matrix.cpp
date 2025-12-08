@@ -139,7 +139,7 @@ Matrix<T>& Matrix<T>::operator+_=(const Matrix<T>& other_row_vector) {
 
 
 template<typename T>
-Matrix<T> Matrix<T>::operator.*(const Matrix<T>& other) const {
+Matrix<T> Matrix<T>::operator*&(const Matrix<T>& other) const {
     if (rows_ != other.rows() || cols_ != other.cols()) {
         throw std::invalid_argument("Matrix dimensions do not match for element-wise multiplication");
     }
@@ -154,7 +154,7 @@ Matrix<T> Matrix<T>::operator.*(const Matrix<T>& other) const {
 
 
 template<typename T>
-Matrix<T>& Matrix<T>::operator.*=(const Matrix<T>& other) {
+Matrix<T>& Matrix<T>::operator*&=(const Matrix<T>& other) {
     if (rows_ != other.rows() || cols_ != other.cols()) {
         throw std::invalid_argument("Matrix dimensions do not match for element-wise multiplication");
     }
