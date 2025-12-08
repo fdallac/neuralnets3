@@ -184,10 +184,14 @@ bool Matrix<T>::operator==(const Matrix<T>& other) const {
     return true;
 }
 
+
+
 template<typename T>
 bool Matrix<T>::operator!=(const Matrix<T>& other) const {
     return !(*this == other);
 }
+
+
 
 template<typename T>
 Matrix<T> Matrix<T>::transpose() const {
@@ -195,6 +199,18 @@ Matrix<T> Matrix<T>::transpose() const {
     for (std::size_t i = 0; i < rows_; ++i) {
         for (std::size_t j = 0; j < cols_; ++j) {
             result(j, i) = (*this)(i, j);
+        }
+    }
+    return result;
+}
+
+
+template<typename T>
+Matrix<T> Matrix<T>::apply(T (*func)(T)) const {
+    Matrix<T> result(rows_, cols_);
+    for (std::size_t i = 0; i < rows_; ++i) {
+        for (std::size_t j = 0; j < cols_; ++j) {
+            result(i, j) = func((*this)(i, j));
         }
     }
     return result;

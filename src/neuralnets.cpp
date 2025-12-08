@@ -98,7 +98,6 @@ Matrix<T> NeuralNets<T>::backward_pass(const Matrix<T>& gradient, const Matrix<T
     Matrix<T> weight_gradient = input.transpose() * delta;   
 
     optimizer->update_weights(weights, weight_gradient);
-
     optimizer->update_bias(bias, delta);
 
 

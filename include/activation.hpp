@@ -15,23 +15,11 @@ template<typename T>
 class ReLU : public Activation<T> {
     public:
         static Matrix<T> forward(const Matrix<T>& M) {
-            Matrix<T> result(M.rows(), M.cols());
-            for (std::size_t i = 0; i < M.rows(); ++i) {
-                for (std::size_t j = 0; j < M.cols(); ++j) {
-                    result(i, j) = M(i, j) > T{} ? M(i, j) : T{};
-                }
-            }
-            return result;
+            return M.apply([](T x) { return x > T{} ? x : T{}; });
         }
 
         static Matrix<T> backward(const Matrix<T>& M) {
-            Matrix<T> result(M.rows(), M.cols());
-            for (std::size_t i = 0; i < M.rows(); ++i) {
-                for (std::size_t j = 0; j < M.cols(); ++j) {
-                    result(i, j) = M(i, j) > T{} ? T{1} : T{};
-                }
-            }
-            return result;
+            return M.apply([](T x) { return x > T{} ? T{1} : T{}; });
         }
 };
 
@@ -40,24 +28,14 @@ template<typename T>
 class Sigmoid : public Activation<T> {
     public:
         static Matrix<T> forward(const Matrix<T>& M) {
-            Matrix<T> result(M.rows(), M.cols());
-            for (std::size_t i = 0; i < M.rows(); ++i) {
-                for (std::size_t j = 0; j < M.cols(); ++j) {
-                    result(i, j) = T{1} / (T{1} + std::exp(-M(i, j)));
-                }
-            }
-            return result;
+            return M.apply([](T x) { return T{1} / (T{1} + std::exp(-x)); });
         }
 
         static Matrix<T> backward(const Matrix<T>& M) {
-            Matrix<T> result(M.rows(), M.cols());
-            for (std::size_t i = 0; i < M.rows(); ++i) {
-                for (std::size_t j = 0; j < M.cols(); ++j) {
-                    T sig = T{1} / (T{1} + std::exp(-M(i, j)));
-                    result(i, j) = sig * (T{1} - sig);
-                }
-            }
-            return result;
+            return M.apply([](T x) { 
+                T sig = T{1} / (T{1} + std::exp(-x));
+                return sig * (T{1} - sig);
+            });
         }
 };
 
@@ -67,23 +45,13 @@ template<typename T>
 class Tanh : public Activation<T> {
     public:
         static Matrix<T> forward(const Matrix<T>& M) {
-            Matrix<T> result(M.rows(), M.cols());
-            for (std::size_t i = 0; i < M.rows(); ++i) {
-                for (std::size_t j = 0; j < M.cols(); ++j) {
-                    result(i, j) = std::tanh(M(i, j));
-                }
-            }
-            return result;
+            return M.apply([](T x) { return std::tanh(x); });
         }
 
         static Matrix<T> backward(const Matrix<T>& M) {
-            Matrix<T> result(M.rows(), M.cols());
-            for (std::size_t i = 0; i < M.rows(); ++i) {
-                for (std::size_t j = 0; j < M.cols(); ++j) {
-                    T t = std::tanh(M(i, j));
-                    result(i, j) = T{1} - t * t;
-                }
-            }
-            return result;
+            return M.apply([](T x) { 
+                T t = std::tanh(x);
+                return T{1} - t * t;
+            });
         }
-};
+};  

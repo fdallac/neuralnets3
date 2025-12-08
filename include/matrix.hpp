@@ -51,6 +51,9 @@ class Matrix {
         // Transpose
         Matrix<T> transpose() const;
 
+        // Apply function element-wise
+        Matrix<T> apply(T (*func)(T)) const;
+
 
     private:
         std::size_t rows_, cols_;
