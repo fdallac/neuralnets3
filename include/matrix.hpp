@@ -38,12 +38,7 @@ class Matrix {
         // Matrix<T>& operator*=(T scalar); // In-place scalar multiplication
         // Matrix<T> operator/(T scalar) const; // Scalar division
         // Matrix<T>& operator/=(T scalar); // In-place scalar division
-        Matrix<T> operator+|(const Matrix<T>& other_col_vector) const; // Matrix addition with a column vector broadcast
-        Matrix<T>& operator+|=(const Matrix<T>& other_col_vector); // In-place matrix addition with column vector broadcast
-        Matrix<T> operator+_(const Matrix<T>& other_row_vector) const; // Matrix addition with a row vector broadcast
-        Matrix<T>& operator+_=(const Matrix<T>& other_row_vector); // In-place matrix addition with row vector broadcast
-        Matrix<T> operator*&(const Matrix<T>& other) const; // Element-wise multiplication
-        Matrix<T>& operator*&=(const Matrix<T>& other); // In-place element-wise multiplication
+        
         
         bool operator==(const Matrix<T>& other) const; // Equality check
         bool operator!=(const Matrix<T>& other) const; // Inequality check
@@ -57,6 +52,18 @@ class Matrix {
         // Row and column sums
         Matrix<T> horizontal_sum() const; // Returns a row vector
         Matrix<T> vertical_sum() const; // Returns a column vector
+
+        // Special operations
+        Matrix<T> broadcast_vertical_sum(const Matrix<T>& vector) const; // Matrix addition with a column vector broadcast
+        Matrix<T>& broadcast_vertical_sum_inplace(const Matrix<T>& other_vector); // In-place matrix addition with column vector broadcast
+        Matrix<T> broadcast_horizontal_sum(const Matrix<T>& other_row_vector) const; // Matrix addition with a row vector broadcast
+        Matrix<T>& broadcast_horizontal_sum_inplace(const Matrix<T>& other_row_vector); // In-place matrix addition with row vector broadcast
+        Matrix<T> elementwise_multiply(const Matrix<T>& other) const; // Element-wise multiplication
+        Matrix<T>& elementwise_multiply_inplace(const Matrix<T>& other); // In-place element-wise multiplication
+
+
+
+
 
 
 

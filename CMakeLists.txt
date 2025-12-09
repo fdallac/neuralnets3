@@ -17,6 +17,11 @@ add_library(
     src/matmul.cpp
 )
 
+add_library(
+    neuralnets STATIC
+    src/neuralnets.cpp
+)
+
 # ---- Enable AVX-512 ----
 target_compile_options(matrix PUBLIC -mavx512f)
 
@@ -37,15 +42,19 @@ add_executable(
     tests/unit/test_matrix_mult.cpp
 )
 add_executable(
+    test_neural_nets
+    tests/unit/test_neural_nets.cpp
+)
+add_executable(
     test_benchmark
     tests/benchmark/test_benchmark.cpp
 )
+
 
 target_link_libraries(
     matrix PUBLIC
     OpenMP::OpenMP_CXX
 )
-
 target_link_libraries(
     test_matrix_construct PRIVATE
     matrix
@@ -70,8 +79,13 @@ target_link_libraries(
     matrix
     ${OPENBLAS_LIB}
 )
+target_link_libraries(
+    neuralnets PUBLIC
+    matrix
+)   
 
 enable_testing()
 add_test(NAME MatrixConstructTest   COMMAND test_matrix_construct)
 add_test(NAME MatrixOpsTest         COMMAND test_matrix_ops)
 add_test(NAME MatrixMultTest        COMMAND test_matrix_mult)   
+add_test(NAME NeuralNetsTest        COMMAND test_neural_nets)

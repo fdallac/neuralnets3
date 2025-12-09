@@ -80,12 +80,12 @@ Matrix<T> NeuralNets<T>::forward_pass(const Matrix<T>& X, const NeuralLayer<T>& 
     if (X.cols() != layer.W.rows()) {
         throw std::invalid_argument("Incompatible dimensions for layer forward pass");
     }
-    // Cache input for backpropagation
+    // Cache input for back-propagation
     layer.X = X;
     // Z = W * X_in
     layer.Z = X * layer.W;
     // Z' = Z + b
-    layer.Z +_= layer.b;
+    layer.Z.broadcast_horizontal_sum_inplace(layer.b);
 
     // X_out = activation(Z')
     return layer.activation.forward(layer.Z);
@@ -95,14 +95,14 @@ Matrix<T> NeuralNets<T>::forward_pass(const Matrix<T>& X, const NeuralLayer<T>& 
 template<typename T>
 Matrix<T> NeuralNets<T>::backward_pass(const Matrix<T>& gradient, const NeuralLayer<T>& layer) {
     // dZ = gradient * activation_derivative (element-wise)
-    Matrix<T> dZ = gradient .* layer.activation.backward(layer.Z);
+    Matrix<T> dZ = gradient.elementwise_multiply(layer.activation.backward(layer.Z));
 
     // prev_gradient = delta * W^T 
     Matrix<T> prev_gradient = dZ * layer.W.transpose();
 
     // Get gradients for weights and bias updates
-    this->db = dZ.horizontal_sum(); // Sum over rows to get bias gradient
-    this->dW = layer.X.transpose() * dZ;   
+    layer.db = dZ.horizontal_sum(); // Sum over rows to get bias gradient
+    layer.dW = layer.X.transpose() * dZ;   
 
     return prev_gradient;
 }

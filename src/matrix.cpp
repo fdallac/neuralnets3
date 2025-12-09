@@ -78,7 +78,8 @@ Matrix<T>& Matrix<T>::operator+=(const Matrix<T>& other) {
 }
 
 
-template<typename T>Matrix<T> Matrix<T>::operator+|(const Matrix<T>& other_col_vector) const {
+template<typename T>
+Matrix<T> Matrix<T>::broadcast_vertical_sum(const Matrix<T>& other_col_vector) const {
     if (other_col_vector.cols() != 1 || other_col_vector.rows() != rows_) {
         throw std::invalid_argument("Column vector dimensions do not match for broadcasting addition");
     }
@@ -93,7 +94,8 @@ template<typename T>Matrix<T> Matrix<T>::operator+|(const Matrix<T>& other_col_v
 }
 
 
-template<typename T>Matrix<T>& Matrix<T>::operator+|=(const Matrix<T>& other_col_vector) {
+template<typename T>
+Matrix<T>& Matrix<T>::broadcast_vertical_sum_inplace(const Matrix<T>& other_col_vector) {
     if (other_col_vector.cols() != 1 || other_col_vector.rows() != rows_) {
         throw std::invalid_argument("Column vector dimensions do not match for broadcasting addition");
     }
@@ -107,7 +109,7 @@ template<typename T>Matrix<T>& Matrix<T>::operator+|=(const Matrix<T>& other_col
 
 
 template<typename T>
-Matrix<T> Matrix<T>::operator+_(const Matrix<T>& other_row_vector) const {
+Matrix<T> Matrix<T>::broadcast_horizontal_sum(const Matrix<T>& other_row_vector) const {
     if (other_row_vector.rows() != 1 || other_row_vector.cols() != cols_) {
         throw std::invalid_argument("Row vector dimensions do not match for broadcasting addition");
     }
@@ -124,7 +126,7 @@ Matrix<T> Matrix<T>::operator+_(const Matrix<T>& other_row_vector) const {
 
 
 template<typename T>
-Matrix<T>& Matrix<T>::operator+_=(const Matrix<T>& other_row_vector) {
+Matrix<T>& Matrix<T>::broadcast_horizontal_sum_inplace(const Matrix<T>& other_row_vector) {
     if (other_row_vector.rows() != 1 || other_row_vector.cols() != cols_) {
         throw std::invalid_argument("Row vector dimensions do not match for broadcasting addition");
     }
@@ -139,7 +141,7 @@ Matrix<T>& Matrix<T>::operator+_=(const Matrix<T>& other_row_vector) {
 
 
 template<typename T>
-Matrix<T> Matrix<T>::operator*&(const Matrix<T>& other) const {
+Matrix<T> Matrix<T>::elementwise_multiply(const Matrix<T>& other) const {
     if (rows_ != other.rows() || cols_ != other.cols()) {
         throw std::invalid_argument("Matrix dimensions do not match for element-wise multiplication");
     }
@@ -154,7 +156,7 @@ Matrix<T> Matrix<T>::operator*&(const Matrix<T>& other) const {
 
 
 template<typename T>
-Matrix<T>& Matrix<T>::operator*&=(const Matrix<T>& other) {
+Matrix<T>& Matrix<T>::elementwise_multiply_inplace(const Matrix<T>& other) {
     if (rows_ != other.rows() || cols_ != other.cols()) {
         throw std::invalid_argument("Matrix dimensions do not match for element-wise multiplication");
     }
