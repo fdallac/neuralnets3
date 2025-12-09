@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <stdexcept>
+#include <iostream>
 
 template<typename T>
 class Matrix {
@@ -62,7 +63,15 @@ class Matrix {
         Matrix<T>& elementwise_multiply_inplace(const Matrix<T>& other); // In-place element-wise multiplication
 
 
-
+        Matrix<T> display() const {
+            for (std::size_t i = 0; i < rows_; ++i) {
+                for (std::size_t j = 0; j < cols_; ++j) {
+                    std::cout << this->operator()(i, j) << " ";
+                }
+                std::cout << std::endl;
+            }
+            return *this;
+        } // For debugging: display matrix contents
 
 
 

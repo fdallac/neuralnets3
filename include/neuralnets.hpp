@@ -65,12 +65,12 @@ class NeuralNets {
                 Matrix<T> gradient = this->loss_function.backward(Z, y);
 
                 // Backward propagation through all layers
-                for (std::size_t i = n_layers - 1; i >= 0; --i) {
+                for (std::size_t i = n_layers - 1; i > 0; --i) {
                     gradient = backward_pass(gradient, layers[i]);
                 }
 
                 // Update weights and biases for all layers
-                for (std::size_t i = 0; i < n_layers; ++i) {
+                for (std::size_t i = n_layers - 1; i > 0; --i) {
                     optimizer.update_weights(layers[i].W, layers[i].dW);
                     optimizer.update_bias(layers[i].b, layers[i].db);
                 }
@@ -112,6 +112,7 @@ class NeuralNets {
         std::size_t get_num_layers() const {
             return n_layers;
         }
+
 
         /// @brief Get a specific layer
         /// @param index Layer index

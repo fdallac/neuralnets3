@@ -51,6 +51,10 @@ add_executable(
     test_benchmark
     tests/benchmark/test_benchmark.cpp
 )
+add_executable(
+    test_run_nn_train
+    tests/unit/test_run_nn_train.cpp
+)
 
 
 target_link_libraries(
@@ -87,6 +91,11 @@ target_link_libraries(
     gtest 
     gtest_main
 )   
+target_link_libraries(
+    test_run_nn_train PRIVATE
+    matrix
+    neuralnets
+)
 
 enable_testing()
 add_test(NAME MatrixConstructTest   COMMAND test_matrix_construct)
