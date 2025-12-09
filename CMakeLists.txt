@@ -20,6 +20,8 @@ add_library(
 add_library(
     neuralnets STATIC
     src/neuralnets.cpp
+    src/activation.cpp
+    src/loss.cpp
 )
 
 # ---- Enable AVX-512 ----
@@ -80,8 +82,10 @@ target_link_libraries(
     ${OPENBLAS_LIB}
 )
 target_link_libraries(
-    neuralnets PUBLIC
+    test_neural_nets PRIVATE
     matrix
+    gtest 
+    gtest_main
 )   
 
 enable_testing()
