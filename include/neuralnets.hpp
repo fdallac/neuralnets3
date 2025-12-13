@@ -4,11 +4,12 @@
 #include "loss.hpp"
 #include "optimizer.hpp"
 #include <iostream>
+#include <cmath>
 
 template<typename T>
 class NeuralLayer {
     public:
-        Matrix<T> W, b, dW, db, X, Z;
+        Matrix<T> W, b, dW, db, X, Z, A;  // Added A to cache activation output
         Activation<T>& activation;
 
         NeuralLayer(std::size_t input_size, std::size_t output_size, Activation<T>& activation) 
@@ -20,6 +21,31 @@ class NeuralLayer {
             this->db = Matrix<T>(1, output_size);
             this->X = Matrix<T>(1, input_size);
             this->Z = Matrix<T>(input_size, output_size);
+
+            // Initialize weights with He initialization (good for ReLU)
+            // stddev = sqrt(2 / n_inputs) for better gradient flow
+            T he_stddev = std::sqrt(static_cast<T>(2.0) / static_cast<T>(input_size));
+            this->normally_initialize_weights(static_cast<T>(0), he_stddev);
+            this->normally_initialize_bias(static_cast<T>(0), static_cast<T>(0.01));
+        }
+
+
+        void normally_initialize_weights(T mean, T stddev) {
+            for (std::size_t i = 0; i < W.rows(); ++i) {
+                for (std::size_t j = 0; j < W.cols(); ++j) {
+                    // Random value in [-1, 1] range, then scale by stddev
+                    T random_val = static_cast<T>(2.0) * static_cast<T>(rand()) / static_cast<T>(RAND_MAX) - static_cast<T>(1.0);
+                    W(i, j) = mean + stddev * random_val;
+                }
+            }
+        }
+
+        void normally_initialize_bias(T mean, T stddev) {
+            for (std::size_t j = 0; j < b.cols(); ++j) {
+                // Random value in [-1, 1] range, then scale by stddev
+                T random_val = static_cast<T>(2.0) * static_cast<T>(rand()) / static_cast<T>(RAND_MAX) - static_cast<T>(1.0);
+                b(0, j) = mean + stddev * random_val;
+            }
         }
 };
 
@@ -49,9 +75,34 @@ class NeuralNets {
         /// @param y Target data matrix
         /// @param epochs Number of training epochs
         /// @param verbose Whether to print training progress
-        void train(const Matrix<T>& X, const Matrix<T>& y, std::size_t epochs, bool verbose = true)  {
+        void train(const Matrix<T>& X, const Matrix<T>& y, int epochs, bool verbose = true)  {
+            
+            // // DEBUGGING
+            // std::cout << "=========="  << std::endl;
+            // std::cout << "Layer 0 weights and bias: " << std::endl;
+            // std::cout << "--- W0 ---"  << std::endl;
+            // layers[0].W.display();
+            // std::cout << "--- b0 ---" << std::endl;
+            // layers[0].b.display();
+            // std::cout << "--- dW0 ---" << std::endl;
+            // layers[0].dW.display();
+            // std::cout << "--- db0 ---" << std::endl;
+            // layers[0].db.display();
+            // std::cout << "==========" << std::endl;
+            // std::cout << "Layer 1 weights and bias: " << std::endl;
+            // std::cout << "--- W1 ---"  << std::endl;
+            // layers[1].W.display();
+            // std::cout << "--- b1 ---" << std::endl;
+            // layers[1].b.display();
+            // std::cout << "--- dW1 ---" << std::endl;
+            // layers[1].dW.display();
+            // std::cout << "--- db1 ---" << std::endl;
+            // layers[1].db.display();
+            // std::cout << "==========" << std::endl;
+            // std::cout << "==========" << std::endl;
+            
             // Simple training loop
-            for (std::size_t epoch = 0; epoch < epochs; ++epoch) {
+            for (int epoch = 0; epoch < epochs; ++epoch) {
                 // Forward pass
                 Matrix<T> Z = this->predict(X);
 
@@ -65,15 +116,39 @@ class NeuralNets {
                 Matrix<T> gradient = this->loss_function.backward(Z, y);
 
                 // Backward propagation through all layers
-                for (std::size_t i = n_layers - 1; i > 0; --i) {
+                for (int i = n_layers - 1; i >= 0; --i) {
                     gradient = backward_pass(gradient, layers[i]);
                 }
 
                 // Update weights and biases for all layers
-                for (std::size_t i = n_layers - 1; i > 0; --i) {
+                for (int i = n_layers - 1; i >= 0; --i) {
                     optimizer.update_weights(layers[i].W, layers[i].dW);
                     optimizer.update_bias(layers[i].b, layers[i].db);
                 }
+
+                // // DEBUGGING
+                // std::cout << "=========="  << std::endl;
+                // std::cout << "Layer 0 weights and bias: " << std::endl;
+                // std::cout << "--- W0 ---"  << std::endl;
+                // layers[0].W.display();
+                // std::cout << "--- b0 ---" << std::endl;
+                // layers[0].b.display();
+                // std::cout << "--- dW0 ---" << std::endl;
+                // layers[0].dW.display();
+                // std::cout << "--- db0 ---" << std::endl;
+                // layers[0].db.display();
+                // std::cout << "==========" << std::endl;
+                // std::cout << "Layer 1 weights and bias: " << std::endl;
+                // std::cout << "--- W1 ---"  << std::endl;
+                // layers[1].W.display();
+                // std::cout << "--- b1 ---" << std::endl;
+                // layers[1].b.display();
+                // std::cout << "--- dW1 ---" << std::endl;
+                // layers[1].dW.display();
+                // std::cout << "--- db1 ---" << std::endl;
+                // layers[1].db.display();
+                // std::cout << "==========" << std::endl;
+                // std::cout << "==========" << std::endl;
             }
         }
 
@@ -85,7 +160,7 @@ class NeuralNets {
             // Forward pass through first layer
             Matrix<T> Z = forward_pass(X, this->layers[0]);
             // Forward pass through remaining layers
-            for (std::size_t i = 1; i < n_layers; ++i) {
+            for (int i = 1; i < n_layers; ++i) {
                 Z = forward_pass(Z, this->layers[i]);
             }
             return Z;
@@ -109,14 +184,14 @@ class NeuralNets {
 
         /// @brief Get number of layers
         /// @return Number of layers
-        std::size_t get_num_layers() const {
+        int get_num_layers() const {
             return n_layers;
         }
 
 
         /// @brief Get a specific layer
         /// @param index Layer index
-        NeuralLayer<T>& get_layer(std::size_t index) {
+        NeuralLayer<T>& get_layer(int index) {
             return layers[index];
         }
 
@@ -139,13 +214,13 @@ class NeuralNets {
             }
             // Cache input for back-propagation
             layer.X = X;
-            // Z = W * X_in
+            // Z = X * W + b
             layer.Z = X * layer.W;
-            // Z' = Z + b
             layer.Z.broadcast_horizontal_sum_inplace(layer.b);
 
-            // X_out = activation(Z')
-            return layer.activation.forward(layer.Z);
+            // A = activation(Z) - cache the activation output
+            layer.A = layer.activation.forward(layer.Z);
+            return layer.A;
         }
 
 

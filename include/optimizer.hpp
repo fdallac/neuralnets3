@@ -27,11 +27,7 @@ class SGD : public Optimizer<T> {
 
         void update_bias(Matrix<T>& bias, const Matrix<T>& bias_gradient) override {
             for (std::size_t j = 0; j < bias.cols(); ++j) {
-                T grad_sum = T{};
-                for (std::size_t i = 0; i < bias_gradient.rows(); ++i) {
-                    grad_sum += bias_gradient(i, j);
-                }
-                bias(0, j) -= learning_rate * grad_sum;
+                bias(0, j) -= learning_rate * bias_gradient(0, j);
             }
         }
 

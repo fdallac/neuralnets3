@@ -219,6 +219,15 @@ Matrix<T> Matrix<T>::apply(T (*func)(T)) const {
 }
 
 
+// template<typename F>
+// Matrix<T> apply(F&& func) const {
+//     Matrix<T> result(rows, cols);
+//     for (size_t i = 0; i < rows * cols; i++)
+//         result.data[i] = func(data[i]);
+//     return result;
+// }
+
+
 template<typename T>
 Matrix<T> Matrix<T>::vertical_sum() const {
     Matrix<T> result(rows_, 1);
