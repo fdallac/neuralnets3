@@ -54,17 +54,14 @@ add_executable(
     test_io_helper
     tests/unit/test_io_helper.cpp
 )
-
-
 add_executable(
-    test_run_nn_train
-    tests/unit/test_run_nn_train.cpp
+    test_classification_neuralnet
+    tests/test_classification_neuralnet.cpp
 )
 add_executable(
-    test_run_io_helper
-    tests/unit/test_run_io_helper.cpp
+    test_regression_neuralnet
+    tests/test_regression_neuralnet.cpp
 )
-
 
 target_link_libraries(
     matrix PUBLIC
@@ -101,19 +98,21 @@ target_link_libraries(
     gtest_main
 )   
 target_link_libraries(
-    test_run_nn_train PRIVATE
-    matrix
-    neuralnets
-)
-target_link_libraries(
     test_io_helper PRIVATE
     matrix
     gtest
     gtest_main
 )
 target_link_libraries(
-    test_run_io_helper PRIVATE
+    test_classification_neuralnet PRIVATE
     matrix
+    neuralnets
+)
+
+target_link_libraries(
+    test_regression_neuralnet PRIVATE
+    matrix
+    neuralnets
 )
 
 enable_testing()
