@@ -14,7 +14,6 @@ find_library(OPENBLAS_LIB NAMES openblas REQUIRED)
 add_library(
     matrix STATIC 
     src/matrix.cpp
-    src/matmul.cpp
 )
 
 add_library(
@@ -52,8 +51,18 @@ add_executable(
     tests/benchmark/test_benchmark.cpp
 )
 add_executable(
+    test_io_helper
+    tests/unit/test_io_helper.cpp
+)
+
+
+add_executable(
     test_run_nn_train
     tests/unit/test_run_nn_train.cpp
+)
+add_executable(
+    test_run_io_helper
+    tests/unit/test_run_io_helper.cpp
 )
 
 
@@ -96,9 +105,20 @@ target_link_libraries(
     matrix
     neuralnets
 )
+target_link_libraries(
+    test_io_helper PRIVATE
+    matrix
+    gtest
+    gtest_main
+)
+target_link_libraries(
+    test_run_io_helper PRIVATE
+    matrix
+)
 
 enable_testing()
 add_test(NAME MatrixConstructTest   COMMAND test_matrix_construct)
 add_test(NAME MatrixOpsTest         COMMAND test_matrix_ops)
 add_test(NAME MatrixMultTest        COMMAND test_matrix_mult)   
 add_test(NAME NeuralNetsTest        COMMAND test_neural_nets)
+add_test(NAME IOHelperTest          COMMAND test_io_helper)
