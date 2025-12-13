@@ -28,7 +28,7 @@ class MSELoss : public Loss<T> {
                     loss += diff * diff;
                 }
             }
-            return loss / static_cast<T>(n_samples);
+            return loss / (static_cast<T>(n_samples) * static_cast<T>(n_outputs));
         }  
 
         Matrix<T> backward(const Matrix<T>& predictions, const Matrix<T>& targets) override {
