@@ -9,6 +9,10 @@
 template<typename T>
 class Matrix {
 public:
+    // ================================================================================
+    // Constructors
+    // ================================================================================
+
     // Default constructor
     Matrix()
         : rows_(0), cols_(0), data_() {}
@@ -25,11 +29,26 @@ public:
         }
     }
 
+
+    // =================================================================================
+    // Getters
+    // =================================================================================
+    std::size_t rows() const noexcept { return rows_; }
+    std::size_t cols() const noexcept { return cols_; }
+    const T* data() const noexcept { return data_.data(); }
+    T* data() noexcept { return data_.data(); }
+
+
+    // =================================================================================
+    // Operators and element access
+    // =================================================================================
+
     // Element access (unchecked)
     T& operator()(std::size_t i, std::size_t j) {
         return data_[i * cols_ + j];
     }
 
+    // Const element access (unchecked)
     const T& operator()(std::size_t i, std::size_t j) const {
         return data_[i * cols_ + j];
     }
@@ -42,6 +61,7 @@ public:
         return data_[i * cols_ + j];
     }
 
+    // Const element access (checked)
     const T& at(std::size_t i, std::size_t j) const {
         if (i >= rows_ || j >= cols_) {
             throw std::out_of_range("Matrix indices out of range");
@@ -49,18 +69,11 @@ public:
         return data_[i * cols_ + j];
     }
 
-    // Getters
-    std::size_t rows() const noexcept { return rows_; }
-    std::size_t cols() const noexcept { return cols_; }
-    const T* data() const noexcept { return data_.data(); }
-    T* data() noexcept { return data_.data(); }
 
-    // Operators
-    Matrix<T> operator*(const Matrix<T>& other) const;
-    //  {
-    //     return MatMul<T>::mm(*this, other);
-    // }
+    // Matrix multiplication
+    Matrix<T> operator*(const Matrix<T>& other) const; // Defined below
 
+    // Matrix addition
     Matrix<T> operator+(const Matrix<T>& other) const {
         if (rows_ != other.rows() || cols_ != other.cols()) {
             throw std::invalid_argument("Matrix dimensions do not match for addition");
@@ -74,6 +87,7 @@ public:
         return result;
     }
 
+    // In-place addition
     Matrix<T>& operator+=(const Matrix<T>& other) {
         if (rows_ != other.rows() || cols_ != other.cols()) {
             throw std::invalid_argument("Matrix dimensions do not match for addition");
@@ -86,6 +100,7 @@ public:
         return *this;
     }
 
+    // Equal operator
     bool operator==(const Matrix<T>& other) const {
         if (rows_ != other.rows() || cols_ != other.cols()) {
             return false;
@@ -100,9 +115,14 @@ public:
         return true;
     }
 
+    // Not equal operator
     bool operator!=(const Matrix<T>& other) const {
         return !(*this == other);
     }
+
+    // =================================================================================
+    // Additional matrix arithmetic operations
+    // =================================================================================
 
     // Transpose
     Matrix<T> transpose() const {
@@ -115,16 +135,6 @@ public:
         return result;
     }
 
-    // Apply function element-wise
-    Matrix<T> apply(T (*func)(T)) const {
-        Matrix<T> result(rows_, cols_);
-        for (std::size_t i = 0; i < rows_; ++i) {
-            for (std::size_t j = 0; j < cols_; ++j) {
-                result(i, j) = func((*this)(i, j));
-            }
-        }
-        return result;
-    }
 
     // Row and column sums
     Matrix<T> vertical_sum() const {
@@ -139,6 +149,7 @@ public:
         return result;
     }
 
+    // Horizontal sum
     Matrix<T> horizontal_sum() const {
         Matrix<T> result(1, cols_);
         for (std::size_t j = 0; j < cols_; ++j) {
@@ -151,7 +162,7 @@ public:
         return result;
     }
 
-    // Broadcasting
+    // Broadcasting sums
     Matrix<T> broadcast_vertical_sum(const Matrix<T>& other_col_vector) const {
         if (other_col_vector.cols() != 1 || other_col_vector.rows() != rows_) {
             throw std::invalid_argument("Column vector dimensions do not match for broadcasting addition");
@@ -165,6 +176,7 @@ public:
         return result;
     }
 
+    // In-place broadcasting vertical sum
     Matrix<T>& broadcast_vertical_sum_inplace(const Matrix<T>& other_col_vector) {
         if (other_col_vector.cols() != 1 || other_col_vector.rows() != rows_) {
             throw std::invalid_argument("Column vector dimensions do not match for broadcasting addition");
@@ -177,6 +189,7 @@ public:
         return *this;
     }
 
+    // Broadcasting horizontal sum
     Matrix<T> broadcast_horizontal_sum(const Matrix<T>& other_row_vector) const {
         if (other_row_vector.rows() != 1 || other_row_vector.cols() != cols_) {
             throw std::invalid_argument("Row vector dimensions do not match for broadcasting addition");
@@ -190,6 +203,7 @@ public:
         return result;
     }
 
+    // In-place broadcasting horizontal sum
     Matrix<T>& broadcast_horizontal_sum_inplace(const Matrix<T>& other_row_vector) {
         if (other_row_vector.rows() != 1 || other_row_vector.cols() != cols_) {
             throw std::invalid_argument("Row vector dimensions do not match for broadcasting addition");
@@ -216,6 +230,7 @@ public:
         return result;
     }
 
+    // In-place element-wise multiplication
     Matrix<T>& elementwise_multiply_inplace(const Matrix<T>& other) {
         if (rows_ != other.rows() || cols_ != other.cols()) {
             throw std::invalid_argument("Matrix dimensions do not match for element-wise multiplication");
@@ -228,6 +243,42 @@ public:
         return *this;
     }
 
+
+    // =================================================================================
+    // Utility functions
+    // =================================================================================
+
+    // Apply function element-wise
+    Matrix<T> apply(T (*func)(T)) const {
+        Matrix<T> result(rows_, cols_);
+        for (std::size_t i = 0; i < rows_; ++i) {
+            for (std::size_t j = 0; j < cols_; ++j) {
+                result(i, j) = func((*this)(i, j));
+            }
+        }
+        return result;
+    }
+
+    // Fill matrix with random values in [min_val, max_val]
+    void fill_uniform_noise(T min_val, T max_val) {
+        for (std::size_t i = 0; i < rows_; ++i) {
+            for (std::size_t j = 0; j < cols_; ++j) {
+                T random_val = min_val + static_cast<T>(rand()) / (static_cast<T>(RAND_MAX / (max_val - min_val)));
+                (*this)(i, j) = random_val;
+            }
+        }
+    }
+
+    // Fill matrix with Gaussian noise
+    void fill_gaussian_noise(T mean, T stddev) {
+        for (std::size_t i = 0; i < rows_; ++i) {
+            for (std::size_t j = 0; j < cols_; ++j) {
+                T random_val = static_cast<T>(2.0) * static_cast<T>(rand()) / static_cast<T>(RAND_MAX) - static_cast<T>(1.0);
+                (*this)(i, j) = mean + random_val * stddev;
+            }
+        }
+    }
+
     // Display (for debugging)
     Matrix<T> display() const {
         for (std::size_t i = 0; i < rows_; ++i) {
@@ -238,6 +289,7 @@ public:
         }
         return *this;
     }
+
 
 private:
     std::size_t rows_, cols_;

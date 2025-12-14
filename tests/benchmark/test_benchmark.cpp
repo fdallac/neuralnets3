@@ -25,12 +25,8 @@ int main(int argc, char** argv) {
     // Initialize matrices A and B with some values
     Matrix<double> A(N, N);
     Matrix<double> B(N, N);
-    for (std::size_t i = 0; i < N; ++i) {
-        for (std::size_t j = 0; j < N; ++j) {
-            A(i, j) = static_cast<double>(i + j);
-            B(i, j) = static_cast<double>(i - j);
-        }
-    }
+    A.fill_uniform_noise(-10.0, 10.0);
+    B.fill_uniform_noise(-10.0, 10.0);
 
  
     // Benchmark OpenBLAS matrix multiplication
@@ -94,10 +90,8 @@ int main(int argc, char** argv) {
     // Output results
     std::cout << "Average time for OpenBLAS MM: " << time_openblas << " ms\n";
     std::cout << "Average time for Vanilla MM: " << time_vanilla << " ms\n";
-    // std::cout << "Average time for Loop Unrolled by 4 MM: " << time_unrolled4 << " ms\n";
     std::cout << "Average time for Loop Unrolled by 8 MM: " << time_unrolled8 << " ms\n";
     std::cout << "Average time for Loop Unrolled by n (n = 8) MM: " << time_unrolled8_1 << " ms\n";
-    // std::cout << "Average time for Loop Unrolled by n (e.g., 8) MM: " << time_unrolled_n8 << " ms\n";
     std::cout << "Average time for Tiled MM: " << time_tiled << " ms\n";
     std::cout << "Average time for OpenMP MM: " << time_openmp << " ms\n";
     std::cout << "Average time for SIMD (AVX-512) MM: " << time_avx512 << " ms\n";
