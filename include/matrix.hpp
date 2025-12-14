@@ -21,6 +21,7 @@ public:
     Matrix(std::size_t i, std::size_t j)
         : rows_(i), cols_(j), data_(i * j, T{}) {}
 
+
     // Constructor with data
     Matrix(std::size_t i, std::size_t j, const std::vector<T>& data)
         : rows_(i), cols_(j), data_(data) {
@@ -248,15 +249,36 @@ public:
     // Utility functions
     // =================================================================================
 
+    // Copy
+    Matrix<T> copy() const {
+        Matrix<T> result(rows_, cols_);
+        for (std::size_t i = 0; i < rows_; ++i) {
+            for (std::size_t j = 0; j < cols_; ++j) {
+                result(i, j) = (*this)(i, j);
+            }
+        }
+        return result;
+    }
+
     // Apply function element-wise
     Matrix<T> apply(T (*func)(T)) const {
-        Matrix<T> result(rows_, cols_);
+        Matrix<T> result(rows_, cols_); 
         for (std::size_t i = 0; i < rows_; ++i) {
             for (std::size_t j = 0; j < cols_; ++j) {
                 result(i, j) = func((*this)(i, j));
             }
         }
         return result;
+    }
+
+
+    // Fil matrix with ones
+    void fill_ones() {
+        for (std::size_t i = 0; i < rows_; ++i) {
+            for (std::size_t j = 0; j < cols_; ++j) {
+                (*this)(i, j) = static_cast<T>(1.0);
+            }
+        }
     }
 
     // Fill matrix with random values in [min_val, max_val]
@@ -301,5 +323,5 @@ private:
 
 template<typename T>
 Matrix<T> Matrix<T>::operator*(const Matrix<T>& other) const {
-    return MatMul<T>::mm(*this, other);
+    return MatMul<T>::mm(*this, other, MatMulMethod::Optimized);
 }
