@@ -75,6 +75,23 @@ class Tanh : public Activation<T> {
 };
 
 
+
+
+template<typename T>
+class Linear : public Activation<T> {
+    public:
+        Matrix<T> forward(const Matrix<T>& M) {
+            return M.copy();
+        }
+
+        Matrix<T> backward(const Matrix<T>& M) {
+            Matrix<T> result(M.rows(), M.cols());
+            result.fill_ones();
+            return result;
+        }
+};
+
+
 template<typename T>
 class Softmax : public Activation<T> {
     public:
@@ -104,5 +121,6 @@ class Softmax : public Activation<T> {
             throw std::logic_error("Softmax backward pass not implemented");
         }
 };
+
 
 
