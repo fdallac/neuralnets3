@@ -131,4 +131,3 @@ class CategoricalCrossEntropyLoss : public Loss<T> {
             return grad;
         }
 };
-    
