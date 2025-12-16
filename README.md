@@ -177,11 +177,11 @@ output/benchmark/plot_benchmark.ipynb
 
 The Jupyter notebook provides:
 - **Linear scale plots**: Absolute performance comparison
-![Alt text](output\benchmark\images\benchmark_img.png)
+![Alt text](output/benchmark/images/benchmark_img.png)
 
 
 - **Log scale plots**: Better visualization across different matrix sizes
-![Alt text](output\benchmark\images\benchmark_img_log_scale.png)
+![Alt text](output/benchmark/images/benchmark_img_log_scale.png)
 
 **Key Observations**:
 1. **Small matrices (< 32×32)**: Simple algorithms often faster due to overhead (thread creation cost)
