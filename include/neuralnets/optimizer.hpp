@@ -1,6 +1,6 @@
 #pragma once
 
-#include "matrix.hpp"
+#include "matrix/matrix.hpp"
 
 template<typename T>
 class Optimizer {

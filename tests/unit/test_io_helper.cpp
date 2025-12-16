@@ -1,5 +1,5 @@
-#include "matrix.hpp"
-#include "utils/iohelper.hpp"
+#include "matrix/matrix.hpp"
+#include "matrix/iohelper.hpp"
 #include <gtest/gtest.h>
 
 

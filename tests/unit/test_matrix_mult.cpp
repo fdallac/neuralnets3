@@ -1,7 +1,7 @@
 // Code for testing matrix multiplication
 
-#include "matrix.hpp"
-#include "matmul.hpp"
+#include "matrix/matrix.hpp"
+#include "matrix/matmul.hpp"
 #include <gtest/gtest.h>
 
 TEST(MatrixMultiplication, SmallMatricesMultiplication) {

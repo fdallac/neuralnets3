@@ -1,6 +1,6 @@
 // Code for testing matrix constructors
 
-#include "matrix.hpp"
+#include "matrix/matrix.hpp"
 #include <gtest/gtest.h>
 
 TEST(MatrixConstructors, DefaultConstructor) {

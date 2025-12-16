@@ -1,7 +1,7 @@
 // Code for testing matrix constructors
 
-#include "matrix.hpp"
-#include "neuralnets.hpp"
+#include "matrix/matrix.hpp"
+#include "neuralnets/neuralnets.hpp"
 #include <gtest/gtest.h>
 
 

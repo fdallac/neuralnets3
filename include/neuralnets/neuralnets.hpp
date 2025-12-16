@@ -1,8 +1,9 @@
 #pragma once
-#include "matrix.hpp"
-#include "activation.hpp"
-#include "loss.hpp"
-#include "optimizer.hpp"
+
+#include "matrix/matrix.hpp"
+#include "neuralnets/activation.hpp"
+#include "neuralnets/loss.hpp"
+#include "neuralnets/optimizer.hpp"
 #include <iostream>
 #include <cmath>
 

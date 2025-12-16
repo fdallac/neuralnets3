@@ -1,6 +1,6 @@
-#include "bench.hpp"
-#include "matrix.hpp"
-#include "matmul.hpp"
+#include "utils/bench.hpp"
+#include "matrix/matrix.hpp"
+#include "matrix/matmul.hpp"
 #include <iostream>
 
 extern "C" {

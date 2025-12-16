@@ -1,4 +1,6 @@
-#include "matrix.hpp"
+#pragma once
+
+#include "matrix/matrix.hpp"
 
 
 template<typename T>

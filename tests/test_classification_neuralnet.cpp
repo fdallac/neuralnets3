@@ -1,10 +1,10 @@
-#include "matrix.hpp"
-#include "activation.hpp"
-#include "loss.hpp" 
-#include "optimizer.hpp"
-#include "neuralnets.hpp"
-#include "metrics.hpp"
-#include "utils/iohelper.hpp"
+#include "matrix/matrix.hpp"
+#include "neuralnets/activation.hpp"
+#include "neuralnets/loss.hpp" 
+#include "neuralnets/optimizer.hpp"
+#include "neuralnets/neuralnets.hpp"
+#include "neuralnets/metrics.hpp"
+#include "matrix/iohelper.hpp"
 
 int main(int argc, char **argv) {
     // Create a simple neural network for binary classification

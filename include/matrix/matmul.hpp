@@ -1,6 +1,6 @@
 #pragma once
 
-#include "matrix.hpp"
+#include "matrix/matrix.hpp"
 #if defined(_OPENMP)
     #include <omp.h>
 #endif

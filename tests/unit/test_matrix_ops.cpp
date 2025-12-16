@@ -1,6 +1,6 @@
 // Code for testing matrix sum and equality operators
 
-#include "matrix.hpp"
+#include "matrix/matrix.hpp"
 #include <gtest/gtest.h>
 
 TEST(MatrixOperations, MatrixAddition) {

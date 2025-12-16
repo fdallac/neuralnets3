@@ -1,5 +1,6 @@
 #pragma once
-#include "matrix.hpp"
+
+#include "matrix/matrix.hpp"
 #include <cmath>
 
 template<typename T>

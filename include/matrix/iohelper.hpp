@@ -1,4 +1,6 @@
-#include "matrix.hpp"
+#pragma once
+
+#include "matrix/matrix.hpp"
 #include <vector>
 #include <stdexcept>
 #include <fstream>

@@ -313,15 +313,35 @@ public:
     }
 
 
+    // Save
+    void save(const std::string& filename);
+
+    void load(const std::string& filename);
+
+
 private:
     std::size_t rows_, cols_;
     std::vector<T> data_;
 };
 
 // Include MatMul after Matrix is defined to avoid circular dependency
-#include "matmul.hpp"
+#include "matrix/matmul.hpp"
 
 template<typename T>
 Matrix<T> Matrix<T>::operator*(const Matrix<T>& other) const {
     return MatMul<T>::mm(*this, other, MatMulMethod::Optimized);
+}
+
+
+#include "matrix/iohelper.hpp"
+
+template<typename T>
+void Matrix<T>::save(const std::string& filename) {
+    IOHelper<T>::write_csv(*this, filename);
+}
+
+template<typename T>
+void Matrix<T>::load(const std::string& filename) {
+    Matrix<T> loaded = IOHelper<T>::read_csv(filename);
+    *this = loaded;
 }
