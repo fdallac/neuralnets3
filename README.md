@@ -1,4 +1,4 @@
-# NeuralNets: Optimized Matrix Operations and Neural Network Framework
+# NeuralNets: Optimized Matrix Multiplication and Neural Network Framework
 
 C++ implementation of matrix multiplication algorithms leveraged into a flexible neural network framework, built from scratch. This project demonstrates various optimization techniques including loop unrolling, cache tiling, SIMD vectorization (AVX-512), and OpenMP parallelization.
 
