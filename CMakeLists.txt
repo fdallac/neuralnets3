@@ -108,6 +108,10 @@ add_executable(test_io_helper
     tests/unit/test_io_helper.cpp
 )
 
+add_executable(test_optimizer
+    tests/unit/test_optimizer.cpp
+)
+
 # Benchmarks
 add_executable(test_benchmark
     tests/benchmark/test_benchmark.cpp
@@ -133,9 +137,11 @@ foreach(t
     test_matrix_mult
     test_neural_nets
     test_io_helper
+    test_optimizer
 )
     target_link_libraries(${t} PRIVATE
         matrix
+        neuralnets
         gtest
         gtest_main
     )
@@ -164,5 +170,6 @@ enable_testing()
 add_test(NAME MatrixConstructTest      COMMAND test_matrix_construct)
 add_test(NAME MatrixOpsTest            COMMAND test_matrix_ops)
 add_test(NAME MatrixMultTest           COMMAND test_matrix_mult)
-add_test(NAME NeuralNetsTest           COMMAND test_neural_nets)
 add_test(NAME IOHelperTest             COMMAND test_io_helper)
+add_test(NAME NeuralNetsTest           COMMAND test_neural_nets)
+add_test(NAME OptimizerTest            COMMAND test_optimizer)
