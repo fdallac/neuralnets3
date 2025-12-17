@@ -34,7 +34,10 @@
 # Data
 *.csv
 *.data
-/data/
+/data/*
+!/data/.keep
+
+
 
 # Build directories
 /build/
