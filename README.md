@@ -444,7 +444,8 @@ The benchmark results demonstrate several key principles for matrix multiplicati
 - [ ] Additional optimizers (e.g., Adam)
 - [ ] GPU acceleration (CUDA)
 - [ ] Refactor `activation.hpp` to include also non-diagonal Jacobian (e.g., SoftMax)
-- [ ] ...
+- [ ] Improve code documentation with Doxygen
+- [ ]
 <!-- - [ ] Convolutional layers
 - [ ] Mini-batch gradient descent
 - [ ] Model serialization (save/load)
