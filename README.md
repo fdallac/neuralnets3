@@ -340,6 +340,8 @@ The project automatically enables:
 ```bash
 doxygen Doxyfile
 ```
+Once documentation has been generated, it can be accessed from `docs/docs.html`
+
 ---
 
 ## Running Tests and Benchmarks
@@ -451,7 +453,7 @@ The benchmark results demonstrate several key principles for matrix multiplicati
 - [ ] GPU acceleration (CUDA)
 - [ ] Refactor `activation.hpp` to include also non-diagonal Jacobian (e.g., SoftMax)
 - [ ] Improve code documentation with Doxygen
-- [ ]
+- [ ] ...
 <!-- - [ ] Convolutional layers
 - [ ] Mini-batch gradient descent
 - [ ] Model serialization (save/load)
