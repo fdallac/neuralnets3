@@ -79,7 +79,7 @@
 
 **13 tests covering network components and training:**
 
-#### Network Architecture (3 tests)
+#### Network Architecture (5 tests)
 - **`AddLayer`** - Tests adding layers and retrieving layer count
 - **`ForwardPass`** - Tests forward propagation through network
 - **`Train`** - Tests complete training loop with loss reduction
