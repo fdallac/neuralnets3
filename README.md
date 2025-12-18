@@ -114,7 +114,7 @@ static Matrix<T> mm_unrolled4(const Matrix<T> &A, const Matrix<T> &B)
 // 8-way loop unrolling
 static Matrix<T> mm_unrolled8(const Matrix<T> &A, const Matrix<T> &B)
 
-// Custom N-wayt loop unrolling
+// Custom N-way loop unrolling
 template<std::size_t N_UNROLL>
 static Matrix<T> mm_unrolled(const Matrix<T> &A, const Matrix<T> &B)
 ```
