@@ -463,7 +463,7 @@ jupyter notebook plot_benchmark.ipynb
 
 ---
 
-## Performance Analysis
+## Key Insights (from performance analysis)
 
 The benchmark results demonstrate several key principles for matrix multiplication:
 
