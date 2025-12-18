@@ -1,6 +1,6 @@
 [submodule "third_party/googletest"]
 	path = third_party/googletest
 	url = https://github.com/google/googletest.git
-[submodule "doxygen-awesome-css"]
-	path = doxygen-awesome-css
+[submodule "third_party/doxygen-awesome-css"]
+	path = third_party/doxygen-awesome-css
 	url = https://github.com/jothepro/doxygen-awesome-css.git
