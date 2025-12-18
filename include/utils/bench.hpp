@@ -1,3 +1,11 @@
+/**
+ * @file bench.hpp
+ * @brief Benchmarking utilities for performance measurement
+ * 
+ * Provides timing and reporting functionality for benchmarking
+ * matrix operations and other performance-critical code.
+ */
+
 #pragma once
 
 #include <chrono>
@@ -7,14 +15,23 @@
 #include <string>
 #include <vector>
 
+/**
+ * @brief Benchmark timing and reporting utilities
+ * 
+ * All methods are static - no instantiation needed.
+ * Uses std::chrono::steady_clock for high-resolution timing.
+ */
 class Benchmark {
     public:
         /**
-         * Runs the provided function multiple times and returns the average elapsed time in milliseconds.
+         * @brief Measure average execution time of a function
+         * @param func Function to benchmark (takes no arguments, returns void)
+         * @param trials Number of timed executions (default: 5)
+         * @param warmup Number of untimed warm-up runs (default: 1)
+         * @return Average execution time in milliseconds
          * 
-         * @param func      Function to benchmark
-         * @param trials    Number of measurement runs
-         * @param warmup    Number of warm-up runs
+         * Warm-up runs help stabilize CPU caches and branch predictors.
+         * Returns mean time across all trials.
          */
         static double measure(
             const std::function<void()>& func,
@@ -43,6 +60,20 @@ class Benchmark {
         }
 
 
+        /**
+         * @brief Measure and log matrix multiplication performance
+         * @param matrix_size String describing matrix dimensions (e.g., "512x512")
+         * @param matmul_method Name of multiplication method being tested
+         * @param func Function to benchmark
+         * @param report_filename CSV file to append results to
+         * @param trials Number of timed executions (default: 5)
+         * @param warmup Number of warm-up runs (default: 1)
+         * @return Average execution time in milliseconds
+         * @throws std::runtime_error if file cannot be opened
+         * 
+         * Appends row to CSV: timestamp,matrix_size,method,time_ms
+         * Creates file with header if it doesn't exist.
+         */
         static double measure_and_report_matmul(
             const std::string& matrix_size,
             const std::string& matmul_method,

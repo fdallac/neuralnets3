@@ -309,6 +309,7 @@ nn.train(X_train, y_train, 1000);
 - **OpenMP**: For parallel matrix multiplication
 - **OpenBLAS**: For benchmark comparison
 - **AVX-512**: CPU support required for SIMD optimizations
+- **Doxygen**: (Optional) For generating interactive documentation
 
 ### Build Instructions
 
@@ -327,13 +328,18 @@ cmake ..
 cmake --build .
 ```
 
-### Compiler Flags
 
 The project automatically enables:
 - `-std=c++17`: C++17 standard
 - `-mavx512f`: AVX-512 SIMD instructions
 - `-fopenmp`: OpenMP parallelization
 
+
+### Generate Documentation
+
+```bash
+doxygen Doxyfile
+```
 ---
 
 ## Running Tests and Benchmarks

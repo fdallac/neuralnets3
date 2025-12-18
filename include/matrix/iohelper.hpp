@@ -1,3 +1,10 @@
+/**
+ * @file iohelper.hpp
+ * @brief CSV input/output utilities for matrices
+ * 
+ * Provides static methods to read and write matrices in CSV format.
+ */
+
 #pragma once
 
 #include "matrix/matrix.hpp"
@@ -10,10 +17,21 @@
 #include <cctype>
 
 
+/**
+ * @brief CSV I/O helper for Matrix class
+ * @tparam T Numeric type (float, double, int, etc.)
+ * 
+ * All methods are static - no instantiation needed.
+ * Supports custom delimiters and optional headers.
+ */
 template<typename T>
 class IOHelper {
     private:
-        // Helper function to trim whitespace from string
+        /**
+         * @brief Trim leading/trailing whitespace from string
+         * @param str Input string
+         * @return Trimmed string
+         */
         static std::string trim(const std::string& str) {
             size_t first = str.find_first_not_of(" \t\r\n");
             if (first == std::string::npos) return "";
@@ -22,6 +40,15 @@ class IOHelper {
         }
 
     public:
+        /**
+         * @brief Write matrix to CSV file
+         * @param M Matrix to write
+         * @param filename Output file path
+         * @param sep Delimiter character (default: ',')
+         * @param add_header Whether to add header line
+         * @param header Header string (if add_header is true)
+         * @throws std::runtime_error if file cannot be opened
+         */
         static void write_csv(const Matrix<T>& M, const std::string& filename, char sep=',', bool add_header=false, const std::string& header="") {
             std::ofstream file(filename);
             if (!file.is_open()) {
@@ -42,6 +69,17 @@ class IOHelper {
             file.close();
         }
 
+        /**
+         * @brief Read matrix from CSV file
+         * @param filename Input file path
+         * @param sep Delimiter character (default: ',')
+         * @param skip_header Whether to skip first line as header
+         * @return Matrix constructed from CSV data
+         * @throws std::runtime_error if file cannot be opened or data is malformed
+         * 
+         * Automatically trims whitespace from values.
+         * All rows must have the same number of columns.
+         */
         static Matrix<T> read_csv(const std::string& filename, char sep=',', bool skip_header=false) {
             std::ifstream file(filename);
             if (!file.is_open()) {

@@ -37,11 +37,13 @@
 /data/*
 !/data/.keep
 
-
-
 # Build directories
 /build/
 /bin/
+
+# Doxygen output
+/docs/html/
+/docs/latex/
 
 # Others
 *.ignore

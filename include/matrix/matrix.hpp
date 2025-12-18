@@ -1,3 +1,14 @@
+/**
+ * @file matrix.hpp
+ * @brief Dense matrix class with linear algebra operations
+ * 
+ * This file contains the core Matrix class implementing:
+ * - Basic matrix construction and element access
+ * - Arithmetic operations (addition, multiplication, element-wise operations)
+ * - Matrix operations (transpose, broadcasting, reduction)
+ * - Multiple matrix multiplication backends
+ */
+
 #pragma once
 
 #include <vector>
@@ -6,6 +17,17 @@
 
 
 
+/**
+ * @brief Dense matrix class with row-major storage
+ * @tparam T Numeric type (float, double, int, etc.)
+ * 
+ * Stores matrix data in row-major order (rows stored contiguously).
+ * Provides standard linear algebra operations and integrates with
+ * multiple matrix multiplication backends (see MatMul class).
+ * 
+ * @note Data is stored in a single contiguous std::vector<T>
+ * @note Indexing uses operator()(i, j) for 0-based access
+ */
 template<typename T>
 class Matrix {
 public:
@@ -13,16 +35,32 @@ public:
     // Constructors
     // ================================================================================
 
-    // Default constructor
+    /**
+     * @brief Default constructor - creates empty 0x0 matrix
+     */
     Matrix()
         : rows_(0), cols_(0), data_() {}
 
-    // Constructor: rows x cols zero-initialized
+    /**
+     * @brief Construct zero-initialized matrix
+     * @param i Number of rows
+     * @param j Number of columns
+     * 
+     * All elements initialized to T{} (zero for numeric types).
+     */
     Matrix(std::size_t i, std::size_t j)
         : rows_(i), cols_(j), data_(i * j, T{}) {}
 
 
-    // Constructor with data
+    /**
+     * @brief Construct matrix from existing data
+     * @param i Number of rows
+     * @param j Number of columns
+     * @param data Vector containing matrix elements in row-major order
+     * @throws std::invalid_argument if data.size() != i * j
+     * 
+     * Data should be laid out as: [row0_col0, row0_col1, ..., row1_col0, ...]
+     */
     Matrix(std::size_t i, std::size_t j, const std::vector<T>& data)
         : rows_(i), cols_(j), data_(data) {
         if (data.size() != i * j) {
@@ -34,9 +72,17 @@ public:
     // =================================================================================
     // Getters
     // =================================================================================
+    
+    /** @brief Get number of rows */
     std::size_t rows() const noexcept { return rows_; }
+    
+    /** @brief Get number of columns */
     std::size_t cols() const noexcept { return cols_; }
+    
+    /** @brief Get const pointer to underlying data array */
     const T* data() const noexcept { return data_.data(); }
+    
+    /** @brief Get mutable pointer to underlying data array */
     T* data() noexcept { return data_.data(); }
 
 
@@ -44,17 +90,34 @@ public:
     // Operators and element access
     // =================================================================================
 
-    // Element access (unchecked)
+    /**
+     * @brief Access element (unchecked)
+     * @param i Row index
+     * @param j Column index
+     * @return Reference to element at (i, j)
+     * @note No bounds checking - faster but unsafe
+     */
     T& operator()(std::size_t i, std::size_t j) {
         return data_[i * cols_ + j];
     }
 
-    // Const element access (unchecked)
+    /**
+     * @brief Access element (unchecked, const)
+     * @param i Row index
+     * @param j Column index
+     * @return Const reference to element at (i, j)
+     */
     const T& operator()(std::size_t i, std::size_t j) const {
         return data_[i * cols_ + j];
     }
 
-    // Element access (checked)
+    /**
+     * @brief Access element with bounds checking
+     * @param i Row index
+     * @param j Column index
+     * @return Reference to element at (i, j)
+     * @throws std::out_of_range if indices are out of bounds
+     */
     T& at(std::size_t i, std::size_t j) {
         if (i >= rows_ || j >= cols_) {
             throw std::out_of_range("Matrix indices out of range");
@@ -62,7 +125,13 @@ public:
         return data_[i * cols_ + j];
     }
 
-    // Const element access (checked)
+    /**
+     * @brief Access element with bounds checking (const)
+     * @param i Row index
+     * @param j Column index
+     * @return Const reference to element at (i, j)
+     * @throws std::out_of_range if indices are out of bounds
+     */
     const T& at(std::size_t i, std::size_t j) const {
         if (i >= rows_ || j >= cols_) {
             throw std::out_of_range("Matrix indices out of range");
@@ -71,10 +140,23 @@ public:
     }
 
 
-    // Matrix multiplication
+    /**
+     * @brief Matrix multiplication
+     * @param other Right-hand matrix
+     * @return Result matrix
+     * @throws std::invalid_argument if dimensions incompatible (cols != other.rows)
+     * 
+     * Delegates to MatMul<T>::mm() which selects optimal implementation.
+     * Defined below class definition.
+     */
     Matrix<T> operator*(const Matrix<T>& other) const; // Defined below
 
-    // Matrix addition
+    /**
+     * @brief Element-wise matrix addition
+     * @param other Matrix to add
+     * @return New matrix with element-wise sum
+     * @throws std::invalid_argument if dimensions don't match
+     */
     Matrix<T> operator+(const Matrix<T>& other) const {
         if (rows_ != other.rows() || cols_ != other.cols()) {
             throw std::invalid_argument("Matrix dimensions do not match for addition");
@@ -88,7 +170,12 @@ public:
         return result;
     }
 
-    // In-place addition
+    /**
+     * @brief In-place element-wise addition
+     * @param other Matrix to add
+     * @return Reference to this matrix
+     * @throws std::invalid_argument if dimensions don't match
+     */
     Matrix<T>& operator+=(const Matrix<T>& other) {
         if (rows_ != other.rows() || cols_ != other.cols()) {
             throw std::invalid_argument("Matrix dimensions do not match for addition");
@@ -101,7 +188,11 @@ public:
         return *this;
     }
 
-    // Equal operator
+    /**
+     * @brief Test matrix equality
+     * @param other Matrix to compare with
+     * @return true if dimensions and all elements match
+     */
     bool operator==(const Matrix<T>& other) const {
         if (rows_ != other.rows() || cols_ != other.cols()) {
             return false;
@@ -116,7 +207,7 @@ public:
         return true;
     }
 
-    // Not equal operator
+    /** @brief Test matrix inequality */
     bool operator!=(const Matrix<T>& other) const {
         return !(*this == other);
     }
@@ -125,7 +216,12 @@ public:
     // Additional matrix arithmetic operations
     // =================================================================================
 
-    // Transpose
+    /**
+     * @brief Compute matrix transpose
+     * @return Transposed matrix (cols x rows)
+     * 
+     * Swaps rows and columns: result(j, i) = this(i, j)
+     */
     Matrix<T> transpose() const {
         Matrix<T> result(cols_, rows_);
         for (std::size_t i = 0; i < rows_; ++i) {
@@ -137,7 +233,10 @@ public:
     }
 
 
-    // Row and column sums
+    /**
+     * @brief Sum across columns (row-wise sum)
+     * @return Column vector (rows x 1) with sum of each row
+     */
     Matrix<T> vertical_sum() const {
         Matrix<T> result(rows_, 1);
         for (std::size_t i = 0; i < rows_; ++i) {
@@ -150,7 +249,12 @@ public:
         return result;
     }
 
-    // Horizontal sum
+    /**
+     * @brief Sum across rows (column-wise sum)
+     * @return Row vector (1 x cols) with sum of each column
+     * 
+     * Used in backpropagation to aggregate gradients across batch.
+     */
     Matrix<T> horizontal_sum() const {
         Matrix<T> result(1, cols_);
         for (std::size_t j = 0; j < cols_; ++j) {
@@ -163,7 +267,12 @@ public:
         return result;
     }
 
-    // Broadcasting sums
+    /**
+     * @brief Add column vector to each column
+     * @param other_col_vector Column vector (rows x 1)
+     * @return Matrix with column vector added to each column
+     * @throws std::invalid_argument if dimensions don't match
+     */
     Matrix<T> broadcast_vertical_sum(const Matrix<T>& other_col_vector) const {
         if (other_col_vector.cols() != 1 || other_col_vector.rows() != rows_) {
             throw std::invalid_argument("Column vector dimensions do not match for broadcasting addition");
@@ -190,7 +299,14 @@ public:
         return *this;
     }
 
-    // Broadcasting horizontal sum
+    /**
+     * @brief Add row vector to each row (bias addition)
+     * @param other_row_vector Row vector (1 x cols)
+     * @return Matrix with row vector added to each row
+     * @throws std::invalid_argument if dimensions don't match
+     * 
+     * Commonly used for adding bias: Z = X*W + b
+     */
     Matrix<T> broadcast_horizontal_sum(const Matrix<T>& other_row_vector) const {
         if (other_row_vector.rows() != 1 || other_row_vector.cols() != cols_) {
             throw std::invalid_argument("Row vector dimensions do not match for broadcasting addition");
@@ -204,7 +320,12 @@ public:
         return result;
     }
 
-    // In-place broadcasting horizontal sum
+    /**
+     * @brief Add row vector to each row in-place
+     * @param other_row_vector Row vector (1 x cols)
+     * @return Reference to this matrix
+     * @throws std::invalid_argument if dimensions don't match
+     */
     Matrix<T>& broadcast_horizontal_sum_inplace(const Matrix<T>& other_row_vector) {
         if (other_row_vector.rows() != 1 || other_row_vector.cols() != cols_) {
             throw std::invalid_argument("Row vector dimensions do not match for broadcasting addition");
@@ -217,7 +338,14 @@ public:
         return *this;
     }
 
-    // Element-wise multiplication
+    /**
+     * @brief Element-wise (Hadamard) multiplication
+     * @param other Matrix to multiply with
+     * @return New matrix with element-wise product
+     * @throws std::invalid_argument if dimensions don't match
+     * 
+     * Used in backpropagation: gradient ⊙ activation_derivative
+     */
     Matrix<T> elementwise_multiply(const Matrix<T>& other) const {
         if (rows_ != other.rows() || cols_ != other.cols()) {
             throw std::invalid_argument("Matrix dimensions do not match for element-wise multiplication");
@@ -249,7 +377,10 @@ public:
     // Utility functions
     // =================================================================================
 
-    // Copy
+    /**
+     * @brief Create deep copy of matrix
+     * @return New matrix with same dimensions and values
+     */
     Matrix<T> copy() const {
         Matrix<T> result(rows_, cols_);
         for (std::size_t i = 0; i < rows_; ++i) {
@@ -260,7 +391,13 @@ public:
         return result;
     }
 
-    // Apply function element-wise
+    /**
+     * @brief Apply function element-wise
+     * @param func Function pointer taking T and returning T
+     * @return New matrix with function applied to each element
+     * 
+     * Can also accept lambdas: matrix.apply([](T x) { return x*x; })
+     */
     Matrix<T> apply(T (*func)(T)) const {
         Matrix<T> result(rows_, cols_); 
         for (std::size_t i = 0; i < rows_; ++i) {
@@ -272,7 +409,9 @@ public:
     }
 
 
-    // Fil matrix with ones
+    /**
+     * @brief Fill matrix with ones
+     */
     void fill_ones() {
         for (std::size_t i = 0; i < rows_; ++i) {
             for (std::size_t j = 0; j < cols_; ++j) {
@@ -281,7 +420,11 @@ public:
         }
     }
 
-    // Fill matrix with random values in [min_val, max_val]
+    /**
+     * @brief Fill matrix with uniform random values
+     * @param min_val Minimum value (inclusive)
+     * @param max_val Maximum value (inclusive)
+     */
     void fill_uniform_noise(T min_val, T max_val) {
         for (std::size_t i = 0; i < rows_; ++i) {
             for (std::size_t j = 0; j < cols_; ++j) {
@@ -291,7 +434,12 @@ public:
         }
     }
 
-    // Fill matrix with Gaussian noise
+    /**
+     * @brief Fill matrix with Gaussian-like noise
+     * @param mean Mean of distribution
+     * @param stddev Standard deviation
+     * @note Uses uniform approximation, not true Gaussian
+     */
     void fill_gaussian_noise(T mean, T stddev) {
         for (std::size_t i = 0; i < rows_; ++i) {
             for (std::size_t j = 0; j < cols_; ++j) {
@@ -301,7 +449,10 @@ public:
         }
     }
 
-    // Display (for debugging)
+    /**
+     * @brief Print matrix to stdout (for debugging)
+     * @return Reference to this matrix (for chaining)
+     */
     Matrix<T> display() const {
         for (std::size_t i = 0; i < rows_; ++i) {
             for (std::size_t j = 0; j < cols_; ++j) {
@@ -313,15 +464,23 @@ public:
     }
 
 
-    // Save
+    /**
+     * @brief Save matrix to CSV file
+     * @param filename Path to output file
+     */
     void save(const std::string& filename);
 
+    /**
+     * @brief Load matrix from CSV file
+     * @param filename Path to input file
+     */
     void load(const std::string& filename);
 
 
 private:
-    std::size_t rows_, cols_;
-    std::vector<T> data_;
+    std::size_t rows_; ///< Number of rows
+    std::size_t cols_; ///< Number of columns
+    std::vector<T> data_; ///< Row-major data storage
 };
 
 // Include MatMul after Matrix is defined to avoid circular dependency

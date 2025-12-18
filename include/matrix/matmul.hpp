@@ -1,3 +1,16 @@
+/**
+ * @file matmul.hpp
+ * @brief Multiple implementations of matrix multiplication
+ * 
+ * Provides various optimized matrix multiplication algorithms:
+ * - Vanilla: Simple triple-nested loop
+ * - LoopUnrolled: Unrolled inner loops for better instruction pipelining
+ * - Tiled: Cache-friendly blocked multiplication
+ * - SIMD_AVX512: Vectorized using AVX-512 intrinsics (float/double only)
+ * - OpenMP: Parallelized using OpenMP
+ * - Optimized: Combines tiling, unrolling, and OpenMP
+ */
+
 #pragma once
 
 #include "matrix/matrix.hpp"
@@ -7,32 +20,48 @@
 #include <immintrin.h>
 
 
+/**
+ * @brief Matrix multiplication method selection
+ * 
+ * Different methods offer tradeoffs between portability, simplicity, and performance.
+ */
 enum class MatMulMethod {
-    Vanilla,
-    LoopUnrolled4,
-    LoopUnrolled8,
-    LoopUnrolled,
-    Tiled,
-    SIMD_AVX2,
-    SIMD_AVX512,
-    OpenMP,
-    Optimized,
-    CUDA
+    Vanilla,        ///< Simple O(n³) algorithm
+    LoopUnrolled4,  ///< 4-way loop unrolling
+    LoopUnrolled8,  ///< 8-way loop unrolling
+    LoopUnrolled,   ///< Template-parameterized unrolling
+    Tiled,          ///< Cache-blocking/tiling
+    SIMD_AVX2,      ///< AVX2 vectorization (not implemented)
+    SIMD_AVX512,    ///< AVX-512 vectorization (float/double only)
+    OpenMP,         ///< Multi-threaded with OpenMP
+    Optimized,      ///< Best combination of optimizations
+    CUDA            ///< GPU acceleration (not implemented)
 };
 
+/**
+ * @brief Matrix multiplication dispatcher and implementations
+ * @tparam T Numeric type (float, double, int, etc.)
+ * 
+ * All methods are static - no instantiation needed.
+ * Use MatMul<T>::mm(A, B, method) to compute A * B.
+ */
 template<typename T>
 class MatMul {
 public:
-    /// Main interface for matrix multiplication
-
-
-    /// @brief  Single interface for matrix multiplication
-    /// @param A Left-hand side matrix
-    /// @param B Right-hand side matrix
-    /// @param method Method to use for multiplication (default: Vanilla)
-    /// @return C = A * B
+    /**
+     * @brief Main interface for matrix multiplication
+     * @param A Left-hand matrix (m x k)
+     * @param B Right-hand matrix (k x n)
+     * @param method Algorithm to use (default: Vanilla)
+     * @return Result matrix C = A * B (m x n)
+     * @throws std::invalid_argument if A.cols() != B.rows()
+     * 
+     * Dispatches to specific implementation based on method parameter.
+     * Recommended: MatMulMethod::Optimized for best performance.
+     */
     static Matrix<T> mm(const Matrix<T>& A, const Matrix<T>& B,
-                 MatMulMethod method = MatMulMethod::Vanilla) { 
+                 MatMulMethod method = MatMulMethod::Optimized) { 
+                    
         switch (method) {
             case MatMulMethod::Vanilla:
                 return mm_vanilla(A, B);
