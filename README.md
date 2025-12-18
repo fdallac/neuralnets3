@@ -1,4 +1,4 @@
-# NeuralNets: Optimized Matrix Multiplication and Neural Network Framework
+# NN3: Optimized Matrix Multiplication and Neural Network Framework
 
 C++ implementation of matrix multiplication algorithms leveraged into a flexible neural network framework, built from scratch. This project demonstrates various optimization techniques including loop unrolling, cache tiling, SIMD vectorization (AVX-512), and OpenMP parallelization.
 
@@ -81,12 +81,18 @@ The core library is implemented as header-only modules to simplify experimentati
 The project implements several matrix multiplication strategies, each demonstrating specific optimization techniques:
 
 #### 1. **Vanilla (Baseline)**
+
 ```cpp
 C[i][j] = Σ A[i][k] * B[k][j]
 ```
 - Standard triple-nested loop implementation
 - No optimizations applied
 - Serves as baseline for comparison
+
+To call it, use:
+```cpp
+static Matrix<T> mm_vanilla(const Matrix<T> &A, const Matrix<T> &B)
+```
 
 #### 2. **Loop Unrolling (4x and 8x)**
 ```cpp
@@ -97,7 +103,20 @@ for (k = 0; k + 7 < N; k += 8) {
 ```
 - Reduces loop overhead by processing multiple iterations together
 - Improves instruction-level parallelism (ILP)
-- Better register utilization
+- Efficient register utilization
+
+To call it, use:
+```cpp
+// 4-way loop unrolling
+static Matrix<T> mm_unrolled4(const Matrix<T> &A, const Matrix<T> &B)
+
+// 8-way loop unrolling
+static Matrix<T> mm_unrolled8(const Matrix<T> &A, const Matrix<T> &B)
+
+// Custom N-wayt loop unrolling
+template<std::size_t N_UNROLL>
+static Matrix<T> mm_unrolled(const Matrix<T> &A, const Matrix<T> &B)
+```
 
 #### 3. **Cache Tiling (Blocking)**
 ```cpp
@@ -110,6 +129,12 @@ for (ii = 0; ii < N; ii += tile_size)
 - Improves cache locality by processing matrix in blocks
 - Reduces cache misses significantly (tile size typically matched to L1/L2 cache size)
 
+To call it, use:
+```cpp
+template<std::size_t TILE_SIZE>
+static Matrix<T> mm_tiled(const Matrix<T> &A, const Matrix<T> &B)
+```
+
 #### 4. **SIMD AVX-512 Vectorization**
 ```cpp
 // Process 8 doubles (512 bits) simultaneously
@@ -120,6 +145,11 @@ vc = _mm512_fmadd_pd(va, vb, vc);
 - Exploits AVX-512 SIMD instructions for data parallelism
 - Processes 8 double-precision floats per instruction
 - Requires B matrix transposition for efficient memory access
+
+To call it, use:
+```cpp
+static Matrix<T> mm_avx512(const Matrix<T> &A, const Matrix<T> &B)
+```
 
 #### 5. **OpenMP Parallelization**
 ```cpp
@@ -132,6 +162,11 @@ for (size_t i = 0; i < M; ++i) {
 - Static scheduling for load balancing
 - Scales with number of cores
 
+To call it, use:
+```cpp
+static Matrix<T> mm_openmp(const Matrix<T> &A, const Matrix<T> &B)
+```
+
 #### 6. **Optimized (Combined)**
 
 - Combines multiple optimization techniques:
@@ -139,6 +174,11 @@ for (size_t i = 0; i < M; ++i) {
   - Vectorization (AVX-512)
   - Cache optimization (Tiling)
 - Best performance among custom implementations
+
+To call it, use:
+```cpp
+static Matrix<T> mm(const Matrix<T> &A, const Matrix<T> &B) // default method
+```
 
 #### 7. **OpenBLAS (Reference)**
 - Industry-standard optimized BLAS library
@@ -466,7 +506,10 @@ The benchmark results demonstrate several key principles for matrix multiplicati
 
 ## References
 
-- **xxx**: [xxx](https://link)
+- **SIMD**  [[1](https://en.wikipedia.org/wiki/Single_instruction,_multiple_data)]
+- **Loop unrolling** [[2](https://en.wikipedia.org/wiki/Loop_unrolling)]
+- **Cache performance** [[3](https://en.wikipedia.org/wiki/Cache_performance_measurement_and_metric)]
+- **Cache hierarchy** [[4](https://en.wikipedia.org/wiki/Cache_hierarchy)]
 
 
 
