@@ -85,7 +85,7 @@ The project implements several matrix multiplication strategies, each demonstrat
 ```cpp
 C[i][j] = Σ A[i][k] * B[k][j]
 ```
-- Standard triple-nested loop implementation
+- Standard triple-nested loop implementation ~ O(n³)
 - No optimizations applied
 - Serves as baseline for comparison
 
@@ -104,6 +104,7 @@ for (k = 0; k + 7 < N; k += 8) {
 - Reduces loop overhead by processing multiple iterations together
 - Improves instruction-level parallelism (ILP)
 - Efficient register utilization
+- Reduce branch predictions with fewer loop iterations
 
 To call it, use:
 ```cpp
@@ -144,7 +145,7 @@ vc = _mm512_fmadd_pd(va, vb, vc);
 ```
 - Exploits AVX-512 SIMD instructions for data parallelism
 - Processes 8 double-precision floats per instruction
-- Requires B matrix transposition for efficient memory access
+- Requires B matrix transposition for efficient contiguous memory access
 
 To call it, use:
 ```cpp
@@ -159,8 +160,8 @@ for (size_t i = 0; i < M; ++i) {
 }
 ```
 - Thread-level parallelism across CPU cores
-- Static scheduling for load balancing
-- Scales with number of cores
+- Static scheduling for load balancing and minimal overhead
+- Ideally scales with number of cores (matrix multiplication is *embarrassingly parallel* across rows or blocks)
 
 To call it, use:
 ```cpp
@@ -489,10 +490,10 @@ The benchmark results demonstrate several key principles for matrix multiplicati
 
 ## Future Improvements
 
+- [x] Improve code documentation with Doxygen
 - [ ] Additional optimizers (e.g., Adam)
 - [ ] GPU acceleration (CUDA)
 - [ ] Refactor `activation.hpp` to include also non-diagonal Jacobian (e.g., SoftMax)
-- [ ] Improve code documentation with Doxygen
 - [ ] ...
 <!-- - [ ] Convolutional layers
 - [ ] Mini-batch gradient descent
