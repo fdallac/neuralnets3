@@ -98,10 +98,24 @@ public:
     /// Specific implementations
 
 
-    /// @brief  Vanilla matrix multiplication
-    /// @param A 
-    /// @param B
-    /// @return C = A * B
+    /**
+     * @brief Vanilla (naive) matrix multiplication using triple nested loops
+     * @param A Left-hand matrix (M x K)
+     * @param B Right-hand matrix (K x N)
+     * @return Result matrix C = A * B (M x N)
+     * @throws std::invalid_argument if A.cols() != B.rows()
+     * 
+     * Algorithm: Simple O(MNK) triple-nested loop implementation.
+     * 
+     * Performance characteristics:
+     * - Time complexity: O(M * N * K)
+     * - Space complexity: O(M * N) for result
+     * - No optimizations applied
+     * - Poor cache locality (accessing B column-wise)
+     * - Baseline reference implementation
+     * 
+     * Use case: Small matrices, educational purposes, correctness verification.
+     */
     static Matrix<T> mm_vanilla(const Matrix<T>& A, const Matrix<T>& B) {
         if (A.cols() != B.rows()) {
             throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
@@ -120,6 +134,23 @@ public:
     }
 
 
+    /**
+     * @brief Matrix multiplication with 4-way loop unrolling
+     * @param A Left-hand matrix (M x K)
+     * @param B Right-hand matrix (K x N)
+     * @return Result matrix C = A * B (M x N)
+     * @throws std::invalid_argument if A.cols() != B.rows()
+     * 
+     * Algorithm: Unrolls the innermost k-loop by factor of 4 using separate accumulators.
+     * 
+     * Performance characteristics:
+     * - Time complexity: O(M * N * K)
+     * - Improved instruction-level parallelism (ILP)
+     * - Reduces loop overhead by ~75%
+     * - Uses 4 accumulator variables to reduce data dependencies
+     * - Compiler can better schedule independent operations
+     * - Handles remaining elements (K % 4) with scalar loop
+     */
     static Matrix<T> mm_unrolled4(const Matrix<T>& A, const Matrix<T>& B) {
         if (A.cols() != B.rows()) {
             throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
@@ -153,6 +184,23 @@ public:
     }
 
 
+    /**
+     * @brief Matrix multiplication with 8-way loop unrolling
+     * @param A Left-hand matrix (M x K)
+     * @param B Right-hand matrix (K x N)
+     * @return Result matrix C = A * B (M x N)
+     * @throws std::invalid_argument if A.cols() != B.rows()
+     * 
+     * Algorithm: Unrolls the innermost k-loop by factor of 8 using separate accumulators.
+     * 
+     * Performance characteristics:
+     * - Time complexity: O(M * N * K)
+     * - Higher instruction-level parallelism than 4-way unrolling
+     * - Reduces loop overhead by ~87.5%
+     * - Uses 8 accumulator variables for maximum ILP
+     * - Better utilization of CPU execution units
+     * - Handles remaining elements (K % 8) with scalar loop
+     */
     static Matrix<T> mm_unrolled8(const Matrix<T>& A, const Matrix<T>& B) {
         if (A.cols() != B.rows()) {
             throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
@@ -194,11 +242,24 @@ public:
     }
 
 
-    /// @brief  Loop unrolled by N matrix multiplication
-    /// @tparam N_UNROLL
-    /// @param A 
-    /// @param B
-    /// @return C = A * B
+    /**
+     * @brief Template-parameterized loop unrolling for matrix multiplication
+     * @tparam N_UNROLL Unrolling factor (number of iterations per unrolled block)
+     * @param A Left-hand matrix (M x K)
+     * @param B Right-hand matrix (K x N)
+     * @return Result matrix C = A * B (M x N)
+     * @throws std::invalid_argument if A.cols() != B.rows()
+     * 
+     * Algorithm: Compile-time configurable loop unrolling using template parameter.
+     * 
+     * Performance characteristics:
+     * - Time complexity: O(M * N * K)
+     * - Reduces loop overhead by (N_UNROLL-1)/N_UNROLL
+     * - Uses N_UNROLL accumulator variables
+     * - Instruction-level parallelism scales with N_UNROLL
+     * - Code size increases linearly with N_UNROLL
+     * - Handles remaining elements (K % N_UNROLL) with scalar loop
+     */
     template<std::size_t N_UNROLL>
     static Matrix<T> mm_unrolled(const Matrix<T>& A, const Matrix<T>& B) {
         if (A.cols() != B.rows()) {
@@ -234,11 +295,24 @@ public:
 
 
 
-    /// @brief  Tiled matrix multiplication
-    /// @tparam TILE_SIZE 
-    /// @param A 
-    /// @param B 
-    /// @return C = A * B
+    /**
+     * @brief Cache-blocked (tiled) matrix multiplication
+     * @tparam TILE_SIZE Dimension of square tiles (e.g., 16, 32, 64)
+     * @param A Left-hand matrix (M x K)
+     * @param B Right-hand matrix (K x N)
+     * @return Result matrix C = A * B (M x N)
+     * @throws std::invalid_argument if A.cols() != B.rows()
+     * 
+     * Algorithm: Divides matrices into TILE_SIZE x TILE_SIZE blocks to improve cache locality.
+     * Uses ikj loop ordering with blocking to maximize cache reuse.
+     * 
+     * Performance characteristics:
+     * - Time complexity: O(M * N * K) with improved cache efficiency
+     * - Reduces cache misses dramatically (O(N³/B) vs O(N³/√B))
+     * - Fits working set into L1/L2 cache
+     * - Particularly effective for large matrices
+     * - Automatically handles non-divisible dimensions
+     */
     template<std::size_t TILE_SIZE>
     static Matrix<T> mm_tiled(const Matrix<T>& A, const Matrix<T>& B) {
         if (A.cols() != B.rows()) {
@@ -270,7 +344,22 @@ public:
 
 
 
-    /// TODO: Placeholder for SIMD (AVX2) implementation
+    /**
+     * @brief AVX2 SIMD-accelerated matrix multiplication (placeholder)
+     * @param A Left-hand matrix (M x K)
+     * @param B Right-hand matrix (K x N)
+     * @return Result matrix C = A * B (M x N)
+     * @throws std::invalid_argument if A.cols() != B.rows()
+     * 
+     * Status: NOT IMPLEMENTED - Placeholder for future AVX2 implementation.
+     * 
+     * Planned algorithm: Vectorized multiplication using 256-bit AVX2 instructions.
+     * - 8 floats or 4 doubles per SIMD register
+     * - Fused multiply-add (FMA) operations
+     * - Horizontal reduction for accumulation
+     * 
+     * @note Currently returns empty matrix - implementation pending.
+     */
     static Matrix<T> mm_avx2(const Matrix<T>& A, const Matrix<T>& B) {
         if (A.cols() != B.rows()) {
             throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
@@ -283,7 +372,27 @@ public:
     }
 
 
-    /// TODO: Placeholder for SIMD (AVX-512) implementation
+    /**
+     * @brief AVX-512 SIMD-accelerated matrix multiplication
+     * @param A Left-hand matrix (M x K)
+     * @param B Right-hand matrix (K x N)
+     * @return Result matrix C = A * B (M x N)
+     * @throws std::invalid_argument if A.cols() != B.rows()
+     * @throws std::invalid_argument if T is not float, double, or int
+     * 
+     * Algorithm: High-performance vectorized multiplication using 512-bit AVX-512 instructions.
+     * - Transposes B for row-major access patterns
+     * - Processes 16 floats, 8 doubles, or 16 ints per SIMD operation
+     * - Uses FMA (fused multiply-add) for reduced latency
+     * - Handles remainder elements with scalar code
+     *
+     * Implementation details:
+     * - float: _mm512_fmadd_ps, 16 elements per vector
+     * - double: _mm512_fmadd_pd, 8 elements per vector
+     * - int: _mm512_mullo_epi32 + _mm512_add_epi32, 16 elements per vector
+     * 
+     * @see mm_avx512_transposed_ptr for low-level implementation
+     */
     static Matrix<T> mm_avx512(const Matrix<T>& A, const Matrix<T>& B) {
         if (A.cols() != B.rows()) {
             throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
@@ -299,6 +408,23 @@ public:
         return C;
     }
 
+    /**
+     * @brief Dispatcher for type-specific AVX-512 implementations
+     * @param A Pointer to left-hand matrix data (row-major, M x K)
+     * @param B_t Pointer to transposed right-hand matrix data (row-major, N x K)
+     * @param C Pointer to result matrix data (row-major, M x N)
+     * @param M Number of rows in A
+     * @param N Number of columns in B
+     * @param K Number of columns in A (rows in B)
+     * @throws std::invalid_argument if T is not float, double, or int
+     * 
+     * Uses compile-time type dispatch (if constexpr) to select optimal implementation:
+     * - float → mm_avx512_transpose_float
+     * - double → mm_avx512_transpose_double
+     * - int → mm_avx512_transpose_int
+     * 
+     * @note Private helper method - not intended for direct use.
+     */
     static void mm_avx512_transposed_ptr(const T* A, const T* B_t, T* C, std::size_t M, std::size_t N, std::size_t K) {
         
         if constexpr (std::is_same_v<T, float>) {
@@ -313,6 +439,24 @@ public:
     }
 
 
+    /**
+     * @brief AVX-512 matrix multiplication for 32-bit integers
+     * @param A Pointer to left-hand matrix (M x K)
+     * @param B_t Pointer to transposed right-hand matrix (N x K)
+     * @param C Pointer to result matrix (M x N)
+     * @param M Number of rows in A
+     * @param N Number of columns in B
+     * @param K Inner dimension
+     * 
+     * Implementation details:
+     * - Uses _mm512_mullo_epi32 for 32-bit integer multiplication
+     * - Processes 16 integers per SIMD operation (512 bits / 32 bits)
+     * - Horizontal reduction by storing and summing vector elements
+     * - Handles K % 16 remainder with scalar code
+     * 
+     * 
+     * @note Private helper method for mm_avx512.
+     */
     static void mm_avx512_transpose_int(const int* A, const int* B_t, int* C, std::size_t M, std::size_t N, std::size_t K) {
         constexpr std::size_t V = 16;
         for (std::size_t i = 0; i < M; ++i) {
@@ -338,6 +482,24 @@ public:
     }
 
 
+    /**
+     * @brief AVX-512 matrix multiplication for single-precision floats
+     * @param A Pointer to left-hand matrix (M x K)
+     * @param B_t Pointer to transposed right-hand matrix (N x K)
+     * @param C Pointer to result matrix (M x N)
+     * @param M Number of rows in A
+     * @param N Number of columns in B
+     * @param K Inner dimension
+     * 
+     * Implementation details:
+     * - Uses _mm512_fmadd_ps (fused multiply-add) for optimal performance
+     * - Processes 16 floats per SIMD operation (512 bits / 32 bits)
+     * - Single-cycle latency FMA reduces computation time
+     * - Horizontal reduction by storing and summing vector elements
+     * - Handles K % 16 remainder with scalar code
+     * 
+     * @note Private helper method for mm_avx512.
+     */
     static void mm_avx512_transpose_float(const float* A, const float* B_t, float* C, std::size_t M, std::size_t N, std::size_t K) {
         constexpr std::size_t V = 16;
         for (std::size_t i = 0; i < M; ++i) {
@@ -363,6 +525,24 @@ public:
     }
 
 
+    /**
+     * @brief AVX-512 matrix multiplication for double-precision floats
+     * @param A Pointer to left-hand matrix (M x K)
+     * @param B_t Pointer to transposed right-hand matrix (N x K)
+     * @param C Pointer to result matrix (M x N)
+     * @param M Number of rows in A
+     * @param N Number of columns in B
+     * @param K Inner dimension
+     * 
+     * Implementation details:
+     * - Uses _mm512_fmadd_pd (fused multiply-add) for optimal performance
+     * - Processes 8 doubles per SIMD operation (512 bits / 64 bits)
+     * - Single-cycle latency FMA reduces computation time
+     * - Horizontal reduction by storing and summing vector elements
+     * - Handles K % 8 remainder with scalar code
+     *  
+     * @note Private helper method for mm_avx512.
+     */
     static void mm_avx512_transpose_double(const double* A, const double* B_t, double* C, std::size_t M, std::size_t N, std::size_t K) {
         constexpr std::size_t V = 8;
         for (std::size_t i = 0; i < M; ++i) {
@@ -388,12 +568,33 @@ public:
     }
 
 
-    /// @brief  OpenMP parallelized matrix multiplication
-    /// @param A
-    /// @param B
-    /// @param num_threads Number of threads to use (-1 for max available)
-    /// @param block_k Block size for the K dimension
-    /// @return C = A * B
+    /**
+     * @brief Multi-threaded matrix multiplication using OpenMP
+     * @param A Left-hand matrix (M x K)
+     * @param B Right-hand matrix (K x N)
+     * @param num_threads Number of threads (-1 for maximum available, default: -1)
+     * @param block_k Block size for k-dimension to improve cache locality (default: 64)
+     * @return Result matrix C = A * B (M x N)
+     * @throws std::invalid_argument if A.cols() != B.rows()
+     * 
+     * Algorithm: Parallelizes outer i-loop using OpenMP with static scheduling.
+     * Also applies k-blocking for better cache performance.
+     * 
+     * OpenMP configuration:
+     * - num_threads = -1: Uses omp_get_max_threads() (all available cores)
+     * - num_threads > 0: Uses specified number of threads
+     * - Fallback to serial execution if OpenMP not enabled at compile time
+     * 
+     * Block size tuning:
+     * - block_k = 64: Good default for most L1 cache sizes
+     * - Smaller: Better cache locality, higher loop overhead
+     * - Larger: Less overhead, possible cache thrashing
+     * 
+     * Use case: Large matrices on multi-core CPUs where parallelization overhead is justified.
+     * 
+     * @note Requires -fopenmp compilation flag. Falls back to serial if not available.
+     * @see mm_openmp_ptr for low-level implementation
+     */
     static Matrix<T> mm_openmp(const Matrix<T>& A, const Matrix<T>& B, int num_threads = -1, size_t block_k = 64) {
         if (A.cols() != B.rows()) {
             throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
@@ -406,7 +607,27 @@ public:
         return C;
     }
 
-    /// Private helper for OpenMP implementation using raw pointers
+    /**
+     * @brief Low-level OpenMP implementation using raw pointer access
+     * @param A Left-hand matrix reference
+     * @param B Right-hand matrix reference
+     * @param C Result matrix reference (modified in-place)
+     * @param num_threads Number of threads (-1 for maximum)
+     * @param block_k Block size for k-dimension
+     * 
+     * Implementation details:
+     * - Uses raw pointers for cache-friendly access
+     * - #pragma omp parallel for schedule(static) on outer loop
+     * - Static scheduling for minimal overhead
+     * - Each thread processes contiguous rows (better cache locality)
+     * - k-blocking reduces cache misses in inner loop
+     * 
+     * Thread safety:
+     * - No race conditions: each thread writes to distinct C elements
+     * - Read-only access to A and B matrices
+     * 
+     * @note Private helper method - not intended for direct use.
+     */
     static void mm_openmp_ptr(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C, int num_threads = -1, size_t block_k = 64) {
         const std::size_t M = A.rows();
         const std::size_t N = B.cols();
@@ -448,14 +669,36 @@ public:
 
 
 
-    /// @brief Matrix multiplication merging OpenMP, AVX-512, and Tiling
-    /// @param A
-    /// @param B
-    /// @param num_threads Number of threads to use (-1 for max available)
-    /// @param tile_i Tile size for the i dimension
-    /// @param tile_j Tile size for the j dimension
-    /// @param tile_k Tile size for the k dimension
-    /// @return C = A * B
+    /**
+     * @brief Highly optimized matrix multiplication combining multiple techniques
+     * @param A Left-hand matrix (M x K)
+     * @param B Right-hand matrix (K x N)
+     * @param num_threads Number of threads (-1 for maximum available, default: -1)
+     * @param tile_i Tile size for i (row) dimension (default: 16)
+     * @param tile_j Tile size for j (column) dimension (default: 16)
+     * @param tile_k Tile size for k (inner) dimension (default: 64)
+     * @return Result matrix C = A * B (M x N)
+     * @throws std::invalid_argument if A.cols() != B.rows()
+     * 
+     * Algorithm: Combines three optimization techniques for maximum performance:
+     * 1. **Cache blocking (tiling)**: Improves data locality
+     * 2. **SIMD vectorization (AVX-512)**: Parallel computation within cores
+     * 3. **Multi-threading (OpenMP)**: Parallel computation across cores
+     * 
+     * Implementation strategy:
+     * - Transposes B once for row-major access
+     * - Tiles computation into cache-friendly blocks
+     * - Parallelizes tile processing with OpenMP
+     * - Uses AVX-512 intrinsics within each tile (float/double only)
+     * - Falls back to scalar for unsupported types
+     * 
+     * Parameter tuning guide:
+     * - tile_i, tile_j: Should fit in L1 cache (16-32 typical)
+     * - tile_k: Should fit in L2 cache (64-128 typical)
+     * - num_threads: Use -1 for automatic (all cores)
+     *  
+     * @see mm_optimized_ptr for low-level implementation details
+     */
     static Matrix<T> mm_optimized(const Matrix<T>& A, const Matrix<T>& B, int num_threads = -1, size_t tile_i = 16, size_t tile_j = 16, size_t tile_k = 64) {
         if (A.cols() != B.rows()) {
             throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
@@ -477,6 +720,41 @@ public:
     }
 
 
+    /**
+     * @brief Low-level optimized implementation using raw pointers
+     * @param A Pointer to left-hand matrix (M x K, row-major)
+     * @param B_t Pointer to transposed right-hand matrix (N x K, row-major)
+     * @param C Pointer to result matrix (M x N, row-major, modified in-place)
+     * @param M Number of rows in A
+     * @param N Number of columns in B
+     * @param K Inner dimension
+     * @param num_threads Number of OpenMP threads
+     * @param tile_i, tile_j, tile_k Tile dimensions for blocking
+     * 
+     * Implementation details:
+     * - Three-level nested tiling (ii, jj, kk)
+     * - OpenMP parallelization at tile level (#pragma omp parallel for)
+     * - SIMD vectorization within tiles (compile-time dispatch)
+     * - Row-major access patterns after B transpose
+     * 
+     * SIMD implementation (float/double):
+     * - float: __m512 (16 elements), _mm512_fmadd_ps
+     * - double: __m512d (8 elements), _mm512_fmadd_pd
+     * - Accumulates within SIMD registers
+     * - Horizontal reduction after vectorized loop
+     * - Scalar cleanup for remainder elements
+     * 
+     * Fallback for other types:
+     * - Scalar accumulation for int and custom types
+     * - Still benefits from tiling and OpenMP
+     * 
+     * Memory access pattern:
+     * - A: row i, columns [k, k+tile_k)
+     * - B_t: row j, columns [k, k+tile_k) (originally B column j)
+     * - C: Accumulates to element (i, j)
+     * 
+     * @note Private helper method with maximum optimization for float/double.
+     */
     static void mm_optimized_ptr(const T* A, const T* B_t, T* C, size_t M, size_t N, size_t K, int num_threads = -1, size_t tile_i = 16, size_t tile_j = 16, size_t tile_k = 64) {
         
         
@@ -560,7 +838,30 @@ public:
 
 
 
-    /// TODO: Placeholder for CUDA implementation
+    /**
+     * @brief GPU-accelerated matrix multiplication using CUDA (placeholder)
+     * @param A Left-hand matrix (M x K)
+     * @param B Right-hand matrix (K x N)
+     * @return Result matrix C = A * B (M x N)
+     * @throws std::invalid_argument if A.cols() != B.rows()
+     * 
+     * Status: NOT IMPLEMENTED - Placeholder for future CUDA implementation.
+     * 
+     * Planned algorithm: GPU-accelerated GEMM using CUDA kernels.
+     * - Memory transfer: Host → Device
+     * - Computation: Parallel on thousands of CUDA cores
+     * - Memory transfer: Device → Host
+     * - Optional: cuBLAS library integration for optimal performance
+     * 
+     * Implementation considerations:
+     * - Tile-based kernel with shared memory
+     * - Thread block organization (e.g., 16x16 or 32x32)
+     * - Coalesced memory access patterns
+     * - Register tiling for per-thread accumulation
+     *  
+     * @note Currently returns empty matrix - implementation pending.
+     * @note Requires CUDA toolkit and compatible NVIDIA GPU.
+     */
     static Matrix<T> mm_cuda(const Matrix<T>& A, const Matrix<T>& B) {
         if (A.cols() != B.rows()) {
             throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
