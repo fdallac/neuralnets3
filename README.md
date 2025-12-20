@@ -27,7 +27,7 @@ C++ implementation of matrix multiplication algorithms leveraged into a flexible
 
 This project consists of two main components:
 
-1. **Optimized Matrix Multiplication Library**: Multiple implementations of matrix multiplication with varying optimization strategies, evaluated against OpenBLAS as a reference implementation
+1. **Optimized Matrix Multiplication Library**: Matrix structure (with basic/algebraic operations, I/O, etc.) and multiple implementations of matrix multiplication with varying optimization strategies, evaluated against OpenBLAS as a reference implementation
 2. **Neural Network Framework**: A flexible, template-based neural network library supporting:
    - Dense layers with customizable activations
    - Multiple activation functions (ReLU, LeakyReLU, Sigmoid, Tanh, Softmax)
@@ -94,11 +94,18 @@ To call it, use:
 static Matrix<T> mm_vanilla(const Matrix<T> &A, const Matrix<T> &B)
 ```
 
-#### 2. **Loop Unrolling (4x and 8x)**
+#### 2. **Loop Unrolling (4x, 8x, Nx)**
 ```cpp
-// Process 8 elements per iteration
-for (k = 0; k + 7 < N; k += 8) {
-    sum += A[i][k+0] * B[k+0][j] + A[i][k+1] * B[k+1][j] + ...
+// Process n elements at a time
+for (; k + N_UNROLL - 1 < N; k += N_UNROLL) {
+    for (std::size_t u = 0; u < N_UNROLL; ++u) {
+        acc[u] += A(i, k + u) * B(k + u, j);
+    }
+}
+// Add the partial sums together
+T sum = T{};
+for (std::size_t u = 0; u < N_UNROLL; ++u) {
+    sum += acc[u];
 }
 ```
 - Reduces loop overhead by processing multiple iterations together
@@ -488,12 +495,16 @@ The benchmark results demonstrate several key principles for matrix multiplicati
 
 ---
 
-## Future Improvements
+## Future Improvements / Fixes
 
 - [x] Improve code documentation with Doxygen
-- [ ] Additional optimizers (e.g., Adam)
-- [ ] GPU acceleration (CUDA)
+- [ ] Fix call locations for `omp_set_num_threads` (also to test with different numbers of cores)
 - [ ] Refactor `activation.hpp` to include also non-diagonal Jacobian (e.g., SoftMax)
+- [ ] More performance testing on different configurations of the implementations
+- [ ] Improve performance configuration of `mm()` to be closer to OpenBLAS
+- [ ] GPU acceleration (CUDA)
+- [ ] Additional optimizers (e.g., Adam)
+- [ ] Develop Python bindings to C++ implementation
 - [ ] ...
 <!-- - [ ] Convolutional layers
 - [ ] Mini-batch gradient descent
