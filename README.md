@@ -518,10 +518,7 @@ The benchmark results demonstrate several key principles for matrix multiplicati
 
 ## References
 
-- **SIMD**  [[1](https://en.wikipedia.org/wiki/Single_instruction,_multiple_data)]
-- **Loop unrolling** [[2](https://en.wikipedia.org/wiki/Loop_unrolling)]
-- **Cache performance** [[3](https://en.wikipedia.org/wiki/Cache_performance_measurement_and_metric)]
-- **Cache hierarchy** [[4](https://en.wikipedia.org/wiki/Cache_hierarchy)]
+- **...**
 
 
 
@@ -530,4 +527,4 @@ The benchmark results demonstrate several key principles for matrix multiplicati
 
 ## Contributors
 
-Filippo Dalla Chiara (filippo.dalla@mail.polimi.it | filippo.dallac@live.it)
+Filippo Dalla Chiara (filippo.dallac@live.it)
