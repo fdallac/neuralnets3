@@ -5,12 +5,30 @@
 #include "neuralnets/neuralnets.hpp"
 #include "neuralnets/metrics.hpp"
 #include "matrix/iohelper.hpp"
+#include <memory>
 
 int main(int argc, char **argv) {
-    // Create a simple neural network for binary classification
+    // Create a simple neural network for regression on wine quality dataset
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <optimizer: adam|sgd>" << std::endl;
+        return 1;
+    }
+    std::string opt = argv[1];
+
+    // Use smart pointer to base class for runtime polymorphism
+    std::unique_ptr<Optimizer<double>> optimizer;
+    
+    if (opt == "adam") {
+        optimizer = std::make_unique<Adam<double>>(0.1, 0.9, 0.999, 1e-8);
+    } else if (opt == "sgd") {
+        optimizer = std::make_unique<SGD<double>>(0.1);
+    } else {
+        std::cerr << "Unsupported optimizer: " << opt << std::endl;
+        return 1;
+    }
+
     MSELoss<double> loss_function;
-    SGD<double> sgd_optimizer(0.1);
-    NeuralNets<double> nn(sgd_optimizer, loss_function);
+    NeuralNets<double> nn(*optimizer, loss_function);
     LeakyReLU<double> leaky_relu;  // Use LeakyReLU to prevent dead neurons
     Linear<double> linear;
     nn.add_layer(12, 32, leaky_relu);   // Input layer to hidden layer

@@ -178,6 +178,7 @@ class NeuralNets {
                 for (int i = n_layers - 1; i >= 0; --i) {
                     optimizer.update_weights(layers[i].W, layers[i].dW);
                     optimizer.update_bias(layers[i].b, layers[i].db);
+                    optimizer.next_step();
                 }
             }
         }

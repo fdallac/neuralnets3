@@ -108,8 +108,12 @@ add_executable(test_io_helper
     tests/unit/test_io_helper.cpp
 )
 
-add_executable(test_optimizer
+add_executable(test_sgd_optimizer
     tests/unit/test_optimizer.cpp
+)
+
+add_executable(test_adam_optimizer
+    tests/unit/test_adam_optimizer.cpp
 )
 
 # Benchmarks
@@ -126,6 +130,7 @@ add_executable(test_regression_neuralnet
     tests/test_regression_neuralnet.cpp
 )
 
+
 # -------------------------------------------------
 # Link targets
 # -------------------------------------------------
@@ -137,7 +142,8 @@ foreach(t
     test_matrix_mult
     test_neural_nets
     test_io_helper
-    test_optimizer
+    test_sgd_optimizer
+    test_adam_optimizer
 )
     target_link_libraries(${t} PRIVATE
         matrix
@@ -172,4 +178,5 @@ add_test(NAME MatrixOpsTest            COMMAND test_matrix_ops)
 add_test(NAME MatrixMultTest           COMMAND test_matrix_mult)
 add_test(NAME IOHelperTest             COMMAND test_io_helper)
 add_test(NAME NeuralNetsTest           COMMAND test_neural_nets)
-add_test(NAME OptimizerTest            COMMAND test_optimizer)
+add_test(NAME SGDOptimizerTest          COMMAND test_sgd_optimizer)
+add_test(NAME AdamOptimizerTest         COMMAND test_adam_optimizer)
