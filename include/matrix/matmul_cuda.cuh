@@ -78,17 +78,6 @@ inline std::string getCudaDeviceInfoImpl() {
  * Computes C = A * B using shared memory tiling.
  * Each thread computes one element of the result matrix C.
  * 
- * Algorithm overview:
- * 1. Each thread block loads a TILE_SIZE x TILE_SIZE tile from A and B into shared memory
- * 2. All threads in the block compute partial products using the shared tiles
- * 3. Process moves to next tile pair until all K elements are accumulated
- * 4. Final result is written to global memory
- * 
- * Memory access pattern:
- * - Global reads are coalesced (threads in a warp read consecutive elements)
- * - Shared memory eliminates redundant global memory accesses
- * - Each element of A and B is read once per tile from global memory
- * 
  * @tparam T Data type (float or double)
  * @param A Input matrix A (M x K), row-major in global memory
  * @param B Input matrix B (K x N), row-major in global memory
@@ -168,13 +157,6 @@ __global__ void matmul_tiled_kernel(const T* __restrict__ A,
  * @brief Host wrapper for CUDA matrix multiplication
  * 
  * Handles memory allocation, data transfer, and kernel launch.
- * 
- * Workflow:
- * 1. Allocate device memory for A, B, C
- * 2. Copy input matrices A, B from host to device
- * 3. Configure and launch kernel
- * 4. Copy result C from device to host
- * 5. Free device memory
  * 
  * @tparam T Data type (float or double)
  * @param h_A Host pointer to matrix A (M x K)
