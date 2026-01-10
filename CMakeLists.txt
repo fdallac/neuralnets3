@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)
 project(neuralnets LANGUAGES CXX)
 
 # -------------------------------------------------
@@ -17,6 +17,21 @@ find_package(OpenMP REQUIRED)
 
 # OpenBLAS (optional but expected)
 find_library(OPENBLAS_LIB NAMES openblas REQUIRED)
+
+# CUDA (optional)
+include(CheckLanguage)
+check_language(CUDA)
+if(CMAKE_CUDA_COMPILER)
+    enable_language(CUDA)
+    set(CMAKE_CUDA_STANDARD 17)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    set(CUDA_ENABLED TRUE)
+    message(STATUS "CUDA support enabled")
+else()
+    set(CUDA_ENABLED FALSE)
+    message(STATUS "CUDA not found - matrix multiplication will not include GPU support")
+endif()
+
 
 # GoogleTest
 add_subdirectory(third_party/googletest)
@@ -48,6 +63,38 @@ target_sources(matrix INTERFACE
     include/matrix/matmul.hpp
     include/matrix/iohelper.hpp
 )
+
+# If CUDA is available, create a CUDA-enabled library
+if(CUDA_ENABLED)
+    add_library(matrix_cuda STATIC
+        include/matrix/matmul_cuda.cu
+        include/matrix/matmul_cuda.cuh
+    )
+    
+    target_include_directories(matrix_cuda PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
+    )
+    
+    set_target_properties(matrix_cuda PROPERTIES
+        CUDA_SEPARABLE_COMPILATION OFF
+        CUDA_ARCHITECTURES "61;70;75;80;86"  # Common architectures: Pascal (61), Volta, Turing, Ampere
+        POSITION_INDEPENDENT_CODE ON
+    )
+    
+    target_compile_options(matrix_cuda PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-fPIC>
+    )
+    
+    # Link CUDA runtime library
+    find_package(CUDAToolkit REQUIRED)
+    target_link_libraries(matrix_cuda PUBLIC CUDA::cudart)
+    
+    # Link matrix library with CUDA support
+    target_link_libraries(matrix INTERFACE matrix_cuda)
+    target_compile_definitions(matrix INTERFACE CUDA_AVAILABLE)
+    
+    message(STATUS "CUDA matrix library configured for architectures: 60;70;75;80;86")
+endif()
 
 # ---------- Neural networks ----------
 add_library(neuralnets INTERFACE)
@@ -116,6 +163,13 @@ add_executable(test_adam_optimizer
     tests/unit/test_adam_optimizer.cpp
 )
 
+# CUDA tests (only built if CUDA is available)
+if(CUDA_ENABLED)
+    add_executable(test_matrix_cuda_mult
+        tests/unit/test_matrix_cuda_mult.cpp
+    )
+endif()
+
 # Benchmarks
 add_executable(test_benchmark
     tests/benchmark/test_benchmark.cpp
@@ -153,6 +207,16 @@ foreach(t
     )
 endforeach()
 
+# CUDA tests
+if(CUDA_ENABLED)
+    target_link_libraries(test_matrix_cuda_mult PRIVATE
+        matrix
+        neuralnets
+        gtest
+        gtest_main
+    )
+endif()
+
 # Neural net tests
 target_link_libraries(test_classification_neuralnet PRIVATE
     neuralnets
@@ -180,3 +244,6 @@ add_test(NAME IOHelperTest             COMMAND test_io_helper)
 add_test(NAME NeuralNetsTest           COMMAND test_neural_nets)
 add_test(NAME SGDOptimizerTest          COMMAND test_sgd_optimizer)
 add_test(NAME AdamOptimizerTest         COMMAND test_adam_optimizer)
+if(CUDA_ENABLED)
+    add_test(NAME MatrixCudaMultTest       COMMAND test_matrix_cuda_mult)
+endif()

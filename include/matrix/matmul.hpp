@@ -19,6 +19,13 @@
 #endif
 #include <immintrin.h>
 
+// Include CUDA interface when CUDA is available
+// matmul_cuda.hpp is a C++ compatible header (no CUDA syntax)
+// The actual CUDA code is compiled separately in matmul_cuda.cu
+#ifdef CUDA_AVAILABLE
+    #include "matrix/matmul_cuda.hpp"
+#endif
+
 
 /**
  * @brief Matrix multiplication method selection
@@ -86,6 +93,13 @@ public:
 
             case MatMulMethod::Optimized:
                 return mm_optimized(A, B);
+
+            case MatMulMethod::CUDA:
+#ifdef CUDA_AVAILABLE
+                return mm_cuda(A, B);
+#else
+                throw std::invalid_argument("CUDA method selected but not compiled with nvcc");
+#endif
             
             // Future methods can be added here
             default:
@@ -636,23 +650,22 @@ public:
         const T* B_data = B.data();
         T* C_data = C.data();
 
-        // Warning if openmp is not enabled
-        #if !defined(_OPENMP)
+        
+#if !defined(_OPENMP)
+            // Warning if openmp is not enabled
             #warning "OpenMP is not enabled. Compiling without OpenMP support."
-        #endif
+#endif
 
         // Set number of threads
-        #if defined(_OPENMP)
+#if defined(_OPENMP)
             if (num_threads <= 0) {
                 num_threads = omp_get_max_threads();
             }
             omp_set_num_threads(num_threads);
-        #endif
 
         // Parallelize outer loop with OpenMP
-        #if defined(_OPENMP)
             #pragma omp parallel for schedule(static)
-        #endif
+#endif
             for (std::size_t i = 0; i < M; ++i) {
                 for (std::size_t j = 0; j < N; ++j) {
                     T sum = T{};
@@ -758,16 +771,14 @@ public:
     static void mm_optimized_ptr(const T* A, const T* B_t, T* C, size_t M, size_t N, size_t K, int num_threads = -1, size_t tile_i = 16, size_t tile_j = 16, size_t tile_k = 64) {
         
         
-        # if defined(_OPENMP)
+# if defined(_OPENMP)
             if (num_threads <= 0) {
                 num_threads = omp_get_max_threads();
             }
             omp_set_num_threads(num_threads);
-        # endif
 
-        #if defined(_OPENMP)
             #pragma omp parallel for schedule(static)
-        #endif
+#endif
 
         for (size_t ii = 0; ii < M; ii += tile_i) {
             size_t i_max = std::min(ii + tile_i, M);
@@ -839,38 +850,79 @@ public:
 
 
     /**
-     * @brief GPU-accelerated matrix multiplication using CUDA (placeholder)
+     * @brief GPU-accelerated matrix multiplication using CUDA
      * @param A Left-hand matrix (M x K)
      * @param B Right-hand matrix (K x N)
      * @return Result matrix C = A * B (M x N)
      * @throws std::invalid_argument if A.cols() != B.rows()
+     * @throws std::runtime_error if CUDA is not available or on CUDA errors
      * 
-     * Status: NOT IMPLEMENTED - Placeholder for future CUDA implementation.
+     * Algorithm: GPU-accelerated GEMM using tiled CUDA kernels with shared memory.
      * 
-     * Planned algorithm: GPU-accelerated GEMM using CUDA kernels.
-     * - Memory transfer: Host → Device
-     * - Computation: Parallel on thousands of CUDA cores
-     * - Memory transfer: Device → Host
-     * - Optional: cuBLAS library integration for optimal performance
+     * Implementation details:
+     * - Uses 16x16 thread blocks (256 threads per block)
+     * - Shared memory tiling for efficient data reuse
+     * - Coalesced global memory access patterns
+     * - Handles arbitrary matrix dimensions with boundary checking
      * 
-     * Implementation considerations:
-     * - Tile-based kernel with shared memory
-     * - Thread block organization (e.g., 16x16 or 32x32)
-     * - Coalesced memory access patterns
-     * - Register tiling for per-thread accumulation
-     *  
-     * @note Currently returns empty matrix - implementation pending.
-     * @note Requires CUDA toolkit and compatible NVIDIA GPU.
+     * Workflow:
+     * 1. Allocate device memory for matrices A, B, C
+     * 2. Copy A and B from host to device (cudaMemcpyHostToDevice)
+     * 3. Launch tiled kernel with appropriate grid/block dimensions
+     * 4. Copy result C from device to host (cudaMemcpyDeviceToHost)
+     * 5. Free device memory
+     * 
+     * Performance characteristics:
+     * - Massive parallelism: Each thread computes one element of C
+     * - Reduced memory bandwidth: Tiles are reused TILE_SIZE times from shared memory
+     * - Overhead: Memory transfers can dominate for small matrices
+     * - Best for: Large matrices (N > 256) where GPU parallelism outweighs transfer cost
+     * 
+     * Supported types:
+     * - float: Single precision (best GPU performance)
+     * - double: Double precision (requires compute capability >= 1.3)
+     * 
+     * @note Requires CUDA toolkit and NVIDIA GPU
+     * @note Compile with nvcc: nvcc -x cu file.cpp -o output
+     * @note Falls back to error if compiled without CUDA support
+     * 
+     * @see matmul_cuda.cuh for kernel implementation details
      */
     static Matrix<T> mm_cuda(const Matrix<T>& A, const Matrix<T>& B) {
         if (A.cols() != B.rows()) {
             throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
         }
+        
         Matrix<T> C(A.rows(), B.cols());
 
-        // CUDA implementation would go here
+#ifdef CUDA_AVAILABLE
+        // Check if CUDA is available at runtime
+        if (!cuda_matmul::isCudaAvailable()) {
+            throw std::runtime_error("No CUDA-capable device found");
+        }
+        
+        // Only float and double are supported for CUDA
+        if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>) {
+            cuda_matmul::matmul_cuda_wrapper<T>(
+                A.data(), 
+                B.data(), 
+                C.data(),
+                A.rows(), 
+                B.cols(), 
+                A.cols()
+            );
+        } else {
+            throw std::invalid_argument("CUDA matrix multiplication only supports float and double types");
+        }
+#else
+        // CUDA not available at compile time
+        throw std::runtime_error("CUDA support not compiled. Recompile with CMake and ensure CUDA toolkit is installed.");
+#endif
 
         return C;
     }
+
+
+
 
 };
