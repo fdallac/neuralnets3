@@ -80,13 +80,15 @@ TEST(Activations, ReLUBackward) {
     ReLU<double> relu;
     Matrix<double> input(2, 3, {-1.0, 0.0, 1.0,
                                 -2.0, 0.5, 2.0});
-    Matrix<double> grad = relu.backward(input);
-    EXPECT_EQ(grad(0, 0), 0.0);  // x <= 0
-    EXPECT_EQ(grad(0, 1), 0.0);  // x <= 0
-    EXPECT_EQ(grad(0, 2), 1.0);  // x > 0
-    EXPECT_EQ(grad(1, 0), 0.0);  // x <= 0
-    EXPECT_EQ(grad(1, 1), 1.0);  // x > 0
-    EXPECT_EQ(grad(1, 2), 1.0);  // x > 0
+    Matrix<double> d_A(2, 3, {1.0, 1.0, 1.0,
+                              1.0, 1.0, 1.0});  // Upstream gradient (all ones)
+    Matrix<double> grad = relu.backward(input, d_A);
+    EXPECT_EQ(grad(0, 0), 0.0);  // x <= 0, so gradient is 0
+    EXPECT_EQ(grad(0, 1), 0.0);  // x <= 0, so gradient is 0
+    EXPECT_EQ(grad(0, 2), 1.0);  // x > 0, so gradient is d_A(0,2) = 1.0
+    EXPECT_EQ(grad(1, 0), 0.0);  // x <= 0, so gradient is 0
+    EXPECT_EQ(grad(1, 1), 1.0);  // x > 0, so gradient is d_A(1,1) = 1.0
+    EXPECT_EQ(grad(1, 2), 1.0);  // x > 0, so gradient is d_A(1,2) = 1.0
 }
 
 TEST(Activations, LeakyReLUForward) {
@@ -98,12 +100,33 @@ TEST(Activations, LeakyReLUForward) {
     EXPECT_DOUBLE_EQ(output(0, 2), 1.0);
 }
 
+TEST(Activations, LeakyReLUBackward) {
+    LeakyReLU<double> leaky_relu;
+    Matrix<double> input(1, 3, {-1.0, 0.0, 1.0});
+    Matrix<double> d_A(1, 3, {1.0, 1.0, 1.0});  // Upstream gradient (all ones)
+    Matrix<double> grad = leaky_relu.backward(input, d_A);
+    EXPECT_DOUBLE_EQ(grad(0, 0), 0.01);  // x < 0, so gradient is 0.01 * d_A(0,0) = 0.01
+    EXPECT_DOUBLE_EQ(grad(0, 1), 0.01);  // x <= 0, so gradient is 0.01 * d_A(0,1) = 0.01
+    EXPECT_DOUBLE_EQ(grad(0, 2), 1.0);   // x > 0, so gradient is d_A(0,2) = 1.0
+}
+
 TEST(Activations, SigmoidForward) {
     Sigmoid<double> sigmoid;
     Matrix<double> input(1, 2, {0.0, 1000.0});
     Matrix<double> output = sigmoid.forward(input);
     EXPECT_NEAR(output(0, 0), 0.5, 1e-6);      // sigmoid(0) ≈ 0.5
     EXPECT_NEAR(output(0, 1), 1.0, 1e-6);      // sigmoid(large) ≈ 1.0
+}
+
+TEST(Activations, SigmoidBackward) {
+    Sigmoid<double> sigmoid;
+    Matrix<double> input(1, 2, {0.0, 2.0});
+    Matrix<double> d_A(1, 2, {1.0, 1.0});  // Upstream gradient (all ones)
+    Matrix<double> grad = sigmoid.backward(input, d_A);
+    // sigmoid(0) = 0.5, derivative = 0.5 * (1 - 0.5) * d_A = 0.25
+    EXPECT_NEAR(grad(0, 0), 0.25, 1e-6);
+    // sigmoid(2) ≈ 0.8808, derivative ≈ 0.8808 * 0.1192 * d_A ≈ 0.105
+    EXPECT_NEAR(grad(0, 1), 0.10499, 1e-4);
 }
 
 TEST(Activations, TanhForward) {
@@ -113,6 +136,19 @@ TEST(Activations, TanhForward) {
     EXPECT_NEAR(output(0, 0), -0.7615941559557649, 1e-6);  // tanh(-1)
     EXPECT_NEAR(output(0, 1), 0.0, 1e-6);                   // tanh(0)
     EXPECT_NEAR(output(0, 2), 0.7615941559557649, 1e-6);   // tanh(1)
+}
+
+TEST(Activations, TanhBackward) {
+    Tanh<double> tanh_act;
+    Matrix<double> input(1, 3, {-1.0, 0.0, 1.0});
+    Matrix<double> d_A(1, 3, {1.0, 1.0, 1.0});  // Upstream gradient (all ones)
+    Matrix<double> grad = tanh_act.backward(input, d_A);
+    // tanh(-1) ≈ -0.7616, derivative ≈ 1 - 0.7616^2 ≈ 0.4200
+    EXPECT_NEAR(grad(0, 0), 0.41997, 1e-4);
+    // tanh(0) = 0, derivative = 1 - 0^2 = 1.0
+    EXPECT_NEAR(grad(0, 1), 1.0, 1e-6);
+    // tanh(1) ≈ 0.7616, derivative ≈ 1 - 0.7616^2 ≈ 0.4200
+    EXPECT_NEAR(grad(0, 2), 0.41997, 1e-4);
 }
 
 TEST(Loss, MSEForward) {

@@ -50,9 +50,9 @@ int main(int argc, char **argv) {
     // Evaluate the neural network on test data
     Matrix<double> train_pred = nn.predict(X_train);
     Matrix<double> test_pred = nn.predict(X_test);
-    Accuracy<double> accuracy_metric;
-    Precision<double> precision_metric;
-    Recall<double> recall_metric;
+    BinaryAccuracy<double> accuracy_metric;
+    BinaryPrecision<double> precision_metric;
+    BinaryRecall<double> recall_metric;
 
     std::cout << "====================" << std::endl;
     double train_accuracy = accuracy_metric.eval_probs(train_pred, y_train);

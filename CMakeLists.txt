@@ -115,6 +115,7 @@ target_sources(neuralnets INTERFACE
     include/neuralnets/loss.hpp
     include/neuralnets/optimizer.hpp
     include/neuralnets/metrics.hpp
+    include/neuralnets/preprocessing.hpp
 )
 
 # ---------- Utilities ----------
@@ -184,6 +185,10 @@ add_executable(test_regression_neuralnet
     tests/test_regression_neuralnet.cpp
 )
 
+add_executable(test_multi_classification_neuralnet
+    tests/test_multi_classification_neuralnet.cpp
+)
+
 
 # -------------------------------------------------
 # Link targets
@@ -223,6 +228,10 @@ target_link_libraries(test_classification_neuralnet PRIVATE
 )
 
 target_link_libraries(test_regression_neuralnet PRIVATE
+    neuralnets
+)
+
+target_link_libraries(test_multi_classification_neuralnet PRIVATE
     neuralnets
 )
 
