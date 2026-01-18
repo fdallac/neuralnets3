@@ -15,6 +15,7 @@
 #include "neuralnets/neuralnets.hpp"
 #include "neuralnets/metrics.hpp"
 #include "neuralnets/preprocessing.hpp"
+#include "neuralnets/normalization.hpp"
 #include "matrix/iohelper.hpp"
 #include <memory>
 #include <iostream>
@@ -93,14 +94,20 @@ int main(int argc, char **argv) {
     LeakyReLU<double> leaky_relu;
     Softmax<double> softmax;
 
-    // Network architecture: 12 -> 64 -> 32 -> 7 (num_classes)
-    std::size_t input_size = X_train.cols();  // 12 features
-    nn.add_layer(input_size, 64, leaky_relu);   // Hidden layer 1
-    nn.add_layer(64, 32, leaky_relu);           // Hidden layer 2
-    nn.add_layer(32, num_classes, softmax);     // Output layer with Softmax
+    // Layer normalization for hidden layers
+    LayerNormalization<double> ln1(128); // After first hidden layer
+    LayerNormalization<double> ln2(64); // After second hidden layer
+    LayerNormalization<double> ln3(32); // After third hidden layer
 
-    std::cout << "  Architecture: " << input_size << " -> 64 -> 32 -> " << num_classes << std::endl;
-    std::cout << "  Hidden activations: LeakyReLU" << std::endl;
+    // Network architecture: 12 -> 128 (LN) -> 64 (LN) -> 32 (LN) -> 7 (num_classes)
+    std::size_t input_size = X_train.cols();  // 12 features
+    nn.add_layer(input_size, 128, leaky_relu, &ln1);  // Hidden layer 1 with LayerNorm
+    nn.add_layer(128, 64, leaky_relu, &ln2);          // Hidden layer 2 with LayerNorm
+    nn.add_layer(64,  32, leaky_relu, &ln3);          // Hidden layer 3 with LayerNorm
+    nn.add_layer(32, num_classes, softmax);           // Output layer with Softmax (no normalization)
+
+    std::cout << "  Architecture: " << input_size << " -> 128 (LN) -> 64 (LN) -> 32 (LN) -> " << num_classes << std::endl;
+    std::cout << "  Hidden activations: LeakyReLU with LayerNormalization" << std::endl;
     std::cout << "  Output activation: Softmax" << std::endl;
     std::cout << "  Loss function: Categorical Cross-Entropy" << std::endl;
 

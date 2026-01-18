@@ -12,6 +12,7 @@
 #include "neuralnets/activation.hpp"
 #include "neuralnets/loss.hpp"
 #include "neuralnets/optimizer.hpp"
+#include "neuralnets/normalization.hpp"
 #include <iostream>
 #include <cmath>
 
@@ -33,18 +34,22 @@ class NeuralLayer {
         Matrix<T> Z;  ///< Cached pre-activation values (X*W + b)
         Matrix<T> A;  ///< Cached post-activation output
         Activation<T>& activation; ///< Reference to activation function
+        Normalization<T>* normalization; ///< Pointer to normalization (nullptr if none)
+        std::string _id;  ///< Layer identifier
 
         /**
          * @brief Construct a neural network layer
          * @param input_size Number of input features
          * @param output_size Number of output neurons
          * @param activation Reference to activation function
+         * @param normalization Pointer to normalization layer (optional, nullptr for none)
+         * @param id Layer identifier (optional)
          * 
          * Initializes weights using He initialization: stddev = sqrt(2/n_inputs)
          * This helps prevent gradient vanishing/exploding with ReLU activations.
          */
-        NeuralLayer(std::size_t input_size, std::size_t output_size, Activation<T>& activation) 
-            : activation(activation) {
+        NeuralLayer(std::size_t input_size, std::size_t output_size, Activation<T>& activation, Normalization<T>* normalization = nullptr, std::string id = "") 
+            : activation(activation), normalization(normalization), _id(id) {
             // Weights and bias are initialized to zero by default
             this->W = Matrix<T>(input_size, output_size);
             this->b = Matrix<T>(1, output_size);
@@ -58,6 +63,11 @@ class NeuralLayer {
             T he_stddev = std::sqrt(static_cast<T>(2.0) / static_cast<T>(input_size));
             this->normally_initialize_weights(static_cast<T>(0), he_stddev);
             this->normally_initialize_bias(static_cast<T>(0), static_cast<T>(0.01));
+
+            // If id not provided, generate random integer id (must be very unlikely to collide)
+            if (this->_id.empty()) {
+                this->_id = std::to_string(rand());
+            }
         }
 
 
@@ -128,13 +138,15 @@ class NeuralNets {
          * @param input_size Number of input features to this layer
          * @param output_size Number of neurons in this layer
          * @param activation Reference to activation function for this layer
+         * @param normalization Pointer to normalization layer (optional, nullptr for none)
+         * @param id Layer identifier (optional)
          * 
          * Layers must be added in order from input to output.
          * The input_size of layer i+1 should match output_size of layer i.
          */
-        void add_layer(size_t input_size, size_t output_size, Activation<T>& activation) {
+        void add_layer(size_t input_size, size_t output_size, Activation<T>& activation, Normalization<T>* normalization = nullptr, std::string id = "") {
             // Initialize weights and bias matrices // TODO better initialization (e.g., Xavier, He)
-            this->layers.push_back(NeuralLayer<T>(input_size, output_size, activation));
+            this->layers.push_back(NeuralLayer<T>(input_size, output_size, activation, normalization, id));
             n_layers++;
         }
 
@@ -176,8 +188,19 @@ class NeuralNets {
 
                 // Update weights and biases for all layers
                 for (int i = n_layers - 1; i >= 0; --i) {
-                    optimizer.update_weights(layers[i].W, layers[i].dW);
-                    optimizer.update_bias(layers[i].b, layers[i].db);
+                    optimizer.update_weights(layers[i].W, layers[i].dW, layers[i]._id);
+                    optimizer.update_bias(layers[i].b, layers[i].db, layers[i]._id);
+                    
+                    // Update normalization parameters if present
+                    if (layers[i].normalization != nullptr) {
+                        // Check if it's LayerNormalization (has gamma/beta)
+                        auto* layer_norm = dynamic_cast<LayerNormalization<T>*>(layers[i].normalization);
+                        if (layer_norm != nullptr) {
+                            optimizer.update_weights(layer_norm->gamma, layer_norm->d_gamma, layers[i]._id + "_gamma");
+                            optimizer.update_bias(layer_norm->beta, layer_norm->d_beta, layers[i]._id + "_beta");
+                        }
+                    }
+                    
                     optimizer.next_step();
                 }
             }
@@ -257,7 +280,8 @@ class NeuralNets {
          * 
          * Computes:
          * 1. Z = X * W + b (pre-activation)
-         * 2. A = activation(Z) (post-activation)
+         * 2. Z_norm = normalization(Z) (if normalization enabled)
+         * 3. A = activation(Z_norm) (post-activation)
          * 
          * Caches X, Z, A for backward pass.
          */
@@ -271,8 +295,14 @@ class NeuralNets {
             layer.Z = X * layer.W;
             layer.Z.broadcast_horizontal_sum_inplace(layer.b);
 
+            // Apply normalization if present
+            Matrix<T> Z_normalized = layer.Z;
+            if (layer.normalization != nullptr) {
+                Z_normalized = layer.normalization->forward(layer.Z);
+            }
+
             // A = activation(Z) - cache the activation output
-            layer.A = layer.activation.forward(layer.Z);
+            layer.A = layer.activation.forward(Z_normalized);
             return layer.A;
         }
 
@@ -284,16 +314,29 @@ class NeuralNets {
          * @return Gradient to propagate to previous layer (batch_size x current_layer_input)
          * 
          * Computes:
-         * 1. dZ = dL/dZ (chain rule is applied internally in activation.backward)
-         * 2. dW = X^T * dZ (weight gradient)
-         * 3. db = sum(dZ) over batch (bias gradient)
-         * 4. prev_gradient = dZ * W^T (gradient for previous layer)
+         * 1. dA = gradient (from upstream)
+         * 2. dZ_norm = activation.backward(Z, dA)
+         * 3. dZ = normalization.backward(dZ_norm) (if normalization enabled)
+         * 4. dW = X^T * dZ (weight gradient)
+         * 5. db = sum(dZ) over batch (bias gradient)
+         * 6. prev_gradient = dZ * W^T (gradient for previous layer)
          * 
          * Updates layer.dW and layer.db for optimizer to use.
          */ 
         static Matrix<T> backward_pass(Matrix<T>& gradient, NeuralLayer<T>& layer)  {
-            // dZ = dL/dZ
-            Matrix<T> dZ = layer.activation.backward(layer.Z, gradient);
+            // dZ = dL/dZ (through activation)
+            // Note: If normalization was applied, we need to use the normalized Z
+            Matrix<T> Z_for_backward = layer.Z;
+            if (layer.normalization != nullptr) {
+                Z_for_backward = layer.normalization->forward(layer.Z);  // Re-compute normalized Z
+            }
+            
+            Matrix<T> dZ = layer.activation.backward(Z_for_backward, gradient);
+
+            // Backprop through normalization if present
+            if (layer.normalization != nullptr) {
+                dZ = layer.normalization->backward(dZ);
+            }
 
             // prev_gradient = delta * W^T 
             Matrix<T> prev_gradient = dZ * layer.W.transpose();

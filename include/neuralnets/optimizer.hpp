@@ -26,16 +26,27 @@ class Optimizer {
          * @brief Update weight matrix using computed gradients
          * @param weights Reference to weight matrix to update (modified in-place)
          * @param weight_gradient Gradient of loss with respect to weights
+         * @param layer_id Identifier for the layer (used for stateful optimizers)
          */
-        virtual void update_weights(Matrix<T>& weights, const Matrix<T>& weight_gradient) = 0;
+        virtual void update_weights(Matrix<T>& weights, const Matrix<T>& weight_gradient, const std::string& layer_id) = 0;
         
         /**
          * @brief Update bias vector using computed gradients
          * @param bias Reference to bias vector to update (modified in-place)
          * @param bias_gradient Gradient of loss with respect to biases
+         * @param layer_id Identifier for the layer (used for stateful optimizers)
          */
-        virtual void update_bias(Matrix<T>& bias, const Matrix<T>& bias_gradient) = 0;
+        virtual void update_bias(Matrix<T>& bias, const Matrix<T>& bias_gradient, const std::string& layer_id) = 0;
         
+        /**
+         * @brief Update normalization parameters if applicable
+         * @param norm_params Reference to normalization parameters matrix
+         * @param norm_gradient Gradient of loss with respect to normalization parameters
+         * @param layer_id Identifier for the layer (used for stateful optimizers)
+         * @note Some optimizers (like Adam) maintain internal state that
+         */
+        virtual void update_normalization_params(Matrix<T>& norm_params, const Matrix<T>& norm_gradient, const std::string& layer_id) = 0;
+
         /**
          * @brief Advance the optimizer to the next step
          * @note Some optimizers (like ADAM) use timestep for bias correction
@@ -74,6 +85,19 @@ class SGD : public Optimizer<T> {
         T get_learning_rate() const { return learning_rate; }
 
         /**
+         * @brief Apply SGD update rule to a parameter matrix
+         * @param parameter Reference to parameter matrix (modified in-place)
+         * @param gradient Gradient matrix with same dimensions as parameter
+         */
+        void update(Matrix<T>& parameter, const Matrix<T>& gradient, const std::string& layer_id) {
+            for (std::size_t i = 0; i < parameter.rows(); ++i) {
+                for (std::size_t j = 0; j < parameter.cols(); ++j) {
+                    parameter(i, j) -= learning_rate * gradient(i, j);
+                }
+            }
+        }
+
+        /**
          * @brief Update weights using SGD rule
          * 
          * Applies: W = W - η * ∇W
@@ -83,12 +107,8 @@ class SGD : public Optimizer<T> {
          * @param weight_momentum Momentum matrix for weights (unused in SGD)
          * @param weight_velocity Velocity matrix for weights (unused in SGD)
          */
-        void update_weights(Matrix<T>& weights, const Matrix<T>& weight_gradient) override {
-            for (std::size_t i = 0; i < weights.rows(); ++i) {
-                for (std::size_t j = 0; j < weights.cols(); ++j) {
-                    weights(i, j) -= learning_rate * weight_gradient(i, j);
-                }
-            }
+        void update_weights(Matrix<T>& weights, const Matrix<T>& weight_gradient, const std::string& layer_id) override {
+            update(weights, weight_gradient, layer_id);
         }
 
         /**
@@ -101,10 +121,21 @@ class SGD : public Optimizer<T> {
          * @param bias_momentum Momentum vector for biases (unused in SGD)
          * @param bias_velocity Velocity vector for biases (unused in SGD)
          */
-        void update_bias(Matrix<T>& bias, const Matrix<T>& bias_gradient) override {
-            for (std::size_t j = 0; j < bias.cols(); ++j) {
-                bias(0, j) -= learning_rate * bias_gradient(0, j);
-            }
+        void update_bias(Matrix<T>& bias, const Matrix<T>& bias_gradient, const std::string& layer_id) override {
+            update(bias, bias_gradient, layer_id);
+        }
+
+        /**
+         * @brief Update normalization parameters using SGD rule
+         * 
+         * Applies: x = x - η * ∇x
+         * 
+         * @param norm_params Reference to normalization parameters matrix
+         * @param norm_gradient Gradient matrix with same dimensions as norm_params
+         * @param layer_id Identifier for the layer (used for stateful optimizers)
+         */
+        void update_normalization_params(Matrix<T>& norm_params, const Matrix<T>& norm_gradient, const std::string& layer_id) override {
+            update(norm_params, norm_gradient, layer_id);
         }
 
     private:
@@ -140,62 +171,84 @@ class Adam : public Optimizer<T> {
         T get_learning_rate() const { return learning_rate; }
 
         /**
+         * @brief Apply Adam update rule to a parameter matrix
+         * @param parameter Reference to parameter matrix (modified in-place)
+         * @param gradient Gradient matrix with same dimensions as parameter
+         * @param momentum First moment estimate matrix
+         * @param velocity Second moment estimate matrix
+         * @param layer_id Identifier for the layer (used for stateful optimizers)
+         */
+        void update(Matrix<T>& parameter, const Matrix<T>& gradient, Matrix<T>& momentum, Matrix<T>& velocity, const std::string& layer_id) {
+            for (std::size_t i = 0; i < parameter.rows(); ++i) {
+                for (std::size_t j = 0; j < parameter.cols(); ++j) {
+                    // Update biased first moment estimate
+                    momentum(i, j) = beta1 * momentum(i, j) + (1 - beta1) * gradient(i, j);
+                    // Update biased second moment estimate
+                    velocity(i, j) = beta2 * velocity(i, j) + (1 - beta2) * gradient(i, j) * gradient(i, j);
+                    
+                    // Compute bias-corrected first and second moment estimates
+                    T m_hat = momentum(i, j) / (1 - std::pow(beta1, ts));
+                    T v_hat = velocity(i, j) / (1 - std::pow(beta2, ts));
+                    
+                    // Update parameters
+                    parameter(i, j) -= learning_rate * m_hat / (std::sqrt(v_hat) + epsilon);
+                }
+            }
+        }
+
+        /**
          * @brief Update weights using Adam optimization algorithm
          * @param weights Reference to weight matrix (modified in-place)
          * @param weight_gradient Gradient matrix with same dimensions as weights
+         * @param layer_id Identifier for the layer (used for stateful optimizers)
          */
-        void update_weights(Matrix<T>& weights, const Matrix<T>& weight_gradient) override {
-            auto& weight_momentum = this->mw[&weights];
-            auto& weight_velocity = this->vw[&weights];
+        void update_weights(Matrix<T>& weights, const Matrix<T>& weight_gradient, const std::string& layer_id) override {
+            auto& weight_momentum = this->momentum_map[&weights];
+            auto& weight_velocity = this->velocity_map[&weights];
 
             if (weight_momentum.rows() == 0) {
                 weight_momentum = Matrix<T>(weights.rows(), weights.cols());
                 weight_velocity = Matrix<T>(weights.rows(), weights.cols());
             }
 
-            for (std::size_t i = 0; i < weights.rows(); ++i) {
-                for (std::size_t j = 0; j < weights.cols(); ++j) {
-                    // Update biased first moment estimate
-                    weight_momentum(i, j) = beta1 * weight_momentum(i, j) + (1 - beta1) * weight_gradient(i, j);
-                    // Update biased second moment estimate
-                    weight_velocity(i, j) = beta2 * weight_velocity(i, j) + (1 - beta2) * weight_gradient(i, j) * weight_gradient(i, j);
-                    
-                    // Compute bias-corrected first and second moment estimates
-                    T m_hat = weight_momentum(i, j) / (1 - std::pow(beta1, ts));
-                    T v_hat = weight_velocity(i, j) / (1 - std::pow(beta2, ts));
-                    
-                    // Update parameters
-                    weights(i, j) -= learning_rate * m_hat / (std::sqrt(v_hat) + epsilon);
-                }
-            }
+            update(weights, weight_gradient, weight_momentum, weight_velocity, layer_id);
         }
 
         /**
          * @brief Update bias using Adam optimization algorithm
          * @param bias Reference to bias vector (modified in-place)
          * @param bias_gradient Gradient vector with same dimensions as bias
+         * @param layer_id Identifier for the layer (used for stateful optimizers)
          */
-        void update_bias(Matrix<T>& bias, const Matrix<T>& bias_gradient) override {
-            auto& bias_momentum = this->mb[&bias];
-            auto& bias_velocity = this->vb[&bias];
+        void update_bias(Matrix<T>& bias, const Matrix<T>& bias_gradient, const std::string& layer_id) override {
+            auto& bias_momentum = this->momentum_map[&bias];
+            auto& bias_velocity = this->velocity_map[&bias];
 
             if (bias_momentum.rows() == 0) {
                 bias_momentum = Matrix<T>(1, bias.cols());
                 bias_velocity = Matrix<T>(1, bias.cols());
             }
 
-            for (std::size_t j = 0; j < bias.cols(); ++j) {
-                // Update biased first moment estimate
-                bias_momentum(0, j) = beta1 * bias_momentum(0, j) + (1 - beta1) * bias_gradient(0, j);
-                // Update biased second moment estimate
-                bias_velocity(0, j) = beta2 * bias_velocity(0, j) + (1 - beta2) * bias_gradient(0, j) * bias_gradient(0, j);
+            update(bias, bias_gradient, bias_momentum, bias_velocity, layer_id);
+        }
 
-                // Compute bias-corrected first and second moment estimates
-                T m_hat = bias_momentum(0, j) / (1 - std::pow(beta1, ts));
-                T v_hat = bias_velocity(0, j) / (1 - std::pow(beta2, ts));
-                // Update parameters
-                bias(0, j) -= learning_rate * m_hat / (std::sqrt(v_hat) + epsilon);
+
+        /**
+         * @brief Update normalization parameters using Adam optimization algorithm
+         * @param norm_params Reference to normalization parameters matrix
+         * @param norm_gradient Gradient matrix with same dimensions as norm_params
+         * @param layer_id Identifier for the layer (used for stateful optimizers)
+         */
+        void update_normalization_params(Matrix<T>& norm_params, const Matrix<T>& norm_gradient, const std::string& layer_id) override {
+            auto& norm_momentum = this->momentum_map[&norm_params];
+            auto& norm_velocity = this->velocity_map[&norm_params];
+
+            if (norm_momentum.rows() == 0) {
+                norm_momentum = Matrix<T>(norm_params.rows(), norm_params.cols());
+                norm_velocity = Matrix<T>(norm_params.rows(), norm_params.cols());
             }
+
+            update(norm_params, norm_gradient, norm_momentum, norm_velocity, layer_id);
         }
 
         void next_step() override {
@@ -210,5 +263,5 @@ class Adam : public Optimizer<T> {
         T epsilon;
         int ts;  ///< Timestep counter for parameter updates
 
-        std::unordered_map<const void*, Matrix<T>> mw, mb, vw, vb; ///< Map to track moments per layer for weights and biases
+        std::unordered_map<const void*, Matrix<T>> momentum_map, velocity_map; ///< Map to track moments per layer for weights, biases, and normalization parameters
 };

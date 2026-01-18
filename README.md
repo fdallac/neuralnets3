@@ -391,6 +391,25 @@ class NeuralNets {
 | **Multi-Class Classification** | MultiClassAccuracy, MultiClassPrecision (macro), MultiClassRecall (macro) |
 | **Regression** | MeanSquaredError, MeanAbsoluteError |
 
+#### Normalization Layers
+
+| Layer | Formula | Parameters | Use Case |
+|-------|---------|------------|----------|
+| **LayerNormalization** | y = γ·((x-μ)/σ) + β | Learnable scale (γ) and shift (β) per feature | Stabilize training, reduce internal covariate shift |
+
+**LayerNormalization** normalizes across features (within each sample), making training more stable and often allowing higher learning rates. It can be optionally applied to hidden layers:
+
+```cpp
+LayerNormalization<double> ln(64);  // 64 features
+nn.add_layer(input_size, 64, relu, &ln);  // Add layer with normalization
+```
+
+Key characteristics:
+- Normalizes each sample independently (mean=0, variance=1 across features)
+- Learnable γ (scale) initialized to 1, β (shift) initialized to 0
+- Gradients automatically computed during backpropagation
+- Parameters (γ, β) updated by the optimizer
+
 #### Preprocessing Utilities
 
 | Utility | Methods | Description |
@@ -476,12 +495,15 @@ int main() {
     Adam<double> optimizer(0.01, 0.9, 0.999, 1e-8);
     NeuralNets<double> nn(optimizer, loss);
     
-    // Architecture: input → 64 → 32 → num_classes (Softmax)
+    // Architecture: input → 64 (LN) → 32 (LN) → num_classes (Softmax)
     LeakyReLU<double> leaky_relu;
     Softmax<double> softmax;
-    nn.add_layer(X_train.cols(), 64, leaky_relu);
-    nn.add_layer(64, 32, leaky_relu);
-    nn.add_layer(32, num_classes, softmax);  // Softmax for multi-class
+    LayerNormalization<double> ln1(64);
+    LayerNormalization<double> ln2(32);
+    
+    nn.add_layer(X_train.cols(), 64, leaky_relu, &ln1);  // With LayerNorm
+    nn.add_layer(64, 32, leaky_relu, &ln2);              // With LayerNorm
+    nn.add_layer(32, num_classes, softmax);              // Softmax for multi-class
     
     // Train
     nn.train(X_train, y_train, 200, true);
@@ -716,7 +738,7 @@ ctest
 ./test_matrix_ops         # Matrix operations tests
 ./test_matrix_mult        # Matrix multiplication tests
 ./test_matrix_cuda_mult   # CUDA multiplication tests (if CUDA available)
-./test_neural_nets        # Neural network tests
+./test_neural_nets        # Neural network tests (including LayerNormalization)
 ./test_io_helper          # CSV I/O tests
 ./test_sgd_optimizer      # SGD optimizer tests
 ./test_adam_optimizer     # Adam optimizer tests
@@ -773,7 +795,10 @@ Predicts continuous wine quality scores using Linear + MSE.
 ```bash
 ./test_multi_classification_neuralnet adam  # or sgd
 ```
-Predicts wine quality classes (3-9) using Softmax + Categorical Cross-Entropy with one-hot encoding.
+Predicts wine quality classes (3-9) using:
+- Softmax + Categorical Cross-Entropy with one-hot encoding
+- LayerNormalization on hidden layers for training stability
+- Adam optimizer with adaptive learning rates
 
 ---
 
@@ -851,6 +876,61 @@ The benchmark results demonstrate several key principles for matrix multiplicati
 
 ---
 
+## Recent Updates
+
+### LayerNormalization Implementation (January 2026)
+
+Added full support for Layer Normalization to stabilize neural network training:
+
+**Features:**
+- ✅ Per-sample feature normalization (mean=0, variance=1)
+- ✅ Learnable scale (γ) and shift (β) parameters
+- ✅ Automatic gradient computation for parameters
+- ✅ Integration with optimizer for parameter updates
+- ✅ Optional per-layer application via pointer interface
+- ✅ Comprehensive unit tests (9 test cases covering forward/backward passes)
+- ✅ Integration tests with multi-class classification
+
+**Usage:**
+```cpp
+LayerNormalization<double> ln(64);  // 64 features
+nn.add_layer(input_size, 64, relu, &ln);  // Add normalization to layer
+```
+
+**Mathematical Details:**
+- Forward: `y = γ·((x-μ)/√(σ²+ε)) + β`
+- Backward: Exact gradient computation through normalization
+- Parameters updated via optimizer (SGD, Adam, etc.)
+
+**Benefits:**
+- Stabilizes training by reducing internal covariate shift
+- Allows higher learning rates
+- Reduces sensitivity to initialization
+- Particularly effective for deep networks
+
+### Bug Fixes and Improvements
+
+**Optimizer Interface (January 2026):**
+- ✅ Fixed Adam optimizer abstract class error
+  - Added proper `update()` override to satisfy base class interface
+  - Separated internal momentum/velocity management into `update_internal()`
+  - All optimizers now properly implement the `Optimizer<T>` base class
+
+**Activation Functions:**
+- ✅ Updated all activation backward passes to new 2-parameter signature
+  - Now takes both input Z and upstream gradient d_A
+  - More flexible and efficient gradient computation
+  - Updated all unit tests accordingly
+
+**Multi-Class Classification:**
+- ✅ Added OneHotEncoder for categorical label encoding
+- ✅ Implemented multi-class metrics (MultiClassAccuracy, Precision, Recall)
+- ✅ Renamed binary metrics for clarity (BinaryAccuracy, etc.)
+- ✅ Added Softmax activation and Categorical Cross-Entropy loss
+- ✅ Complete multi-class classification example with wine quality dataset
+
+---
+
 ## Future Improvements / Fixes
 
 - [x] Improve code documentation with Doxygen
@@ -858,7 +938,6 @@ The benchmark results demonstrate several key principles for matrix multiplicati
 - [x] Additional optimizers (Adam)
 - [x] Develop Python bindings to C++ implementation
 - [x] Refactor `activation.hpp` to include SoftMax
-- [ ] Fix call locations for `omp_set_num_threads` (also to test with different numbers of cores)
 - [ ] More performance testing on different configurations of the implementations
 - [ ] Improve performance configuration of `mm()` to be closer to OpenBLAS
 - [ ] Implement NumPy to C++ Matrix as zero-copy conversion

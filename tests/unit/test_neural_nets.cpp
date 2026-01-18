@@ -2,7 +2,9 @@
 
 #include "matrix/matrix.hpp"
 #include "neuralnets/neuralnets.hpp"
+#include "neuralnets/normalization.hpp"
 #include <gtest/gtest.h>
+#include <cmath>
 
 
 TEST(NeuralNets, AddLayer) {
@@ -217,6 +219,173 @@ TEST(NeuralNets, WeightsInitialization) {
         }
     }
     EXPECT_TRUE(has_non_zero);
+}
+
+// ===========================================================================
+// LayerNormalization Tests
+// ===========================================================================
+
+TEST(LayerNormalization, Initialization) {
+    LayerNormalization<double> ln(5);
+    
+    // Check gamma initialized to 1
+    for (std::size_t j = 0; j < 5; ++j) {
+        EXPECT_DOUBLE_EQ(ln.gamma(0, j), 1.0);
+    }
+    
+    // Check beta initialized to 0
+    for (std::size_t j = 0; j < 5; ++j) {
+        EXPECT_DOUBLE_EQ(ln.beta(0, j), 0.0);
+    }
+}
+
+TEST(LayerNormalization, ForwardNormalization) {
+    LayerNormalization<double> ln(4);
+    
+    // Input: single sample with features [2, 4, 6, 8]
+    // Mean = 5, Variance = 5, Std = sqrt(5) ≈ 2.236
+    Matrix<double> input(1, 4, {2.0, 4.0, 6.0, 8.0});
+    Matrix<double> output = ln.forward(input);
+    
+    // Normalized values should have mean ≈ 0 and variance ≈ 1
+    double mean = 0.0;
+    for (std::size_t j = 0; j < 4; ++j) {
+        mean += output(0, j);
+    }
+    mean /= 4.0;
+    EXPECT_NEAR(mean, 0.0, 1e-5);
+    
+    double variance = 0.0;
+    for (std::size_t j = 0; j < 4; ++j) {
+        variance += (output(0, j) - mean) * (output(0, j) - mean);
+    }
+    variance /= 4.0;
+    EXPECT_NEAR(variance, 1.0, 1e-5);
+}
+
+TEST(LayerNormalization, ForwardBatch) {
+    LayerNormalization<double> ln(3);
+    
+    // Batch of 2 samples
+    Matrix<double> input(2, 3, {1.0, 2.0, 3.0,
+                                 4.0, 5.0, 6.0});
+    Matrix<double> output = ln.forward(input);
+    
+    EXPECT_EQ(output.rows(), 2);
+    EXPECT_EQ(output.cols(), 3);
+    
+    // Each row should be independently normalized
+    // Row 0: mean=2, var=2/3, std≈0.816
+    // Row 1: mean=5, var=2/3, std≈0.816
+    for (std::size_t i = 0; i < 2; ++i) {
+        double row_mean = 0.0;
+        for (std::size_t j = 0; j < 3; ++j) {
+            row_mean += output(i, j);
+        }
+        row_mean /= 3.0;
+        EXPECT_NEAR(row_mean, 0.0, 1e-5);
+    }
+}
+
+TEST(LayerNormalization, BackwardGradient) {
+    LayerNormalization<double> ln(3);
+    
+    Matrix<double> input(1, 3, {1.0, 2.0, 3.0});
+    ln.forward(input);  // Populate cache
+    
+    // Gradient from upstream (all ones)
+    Matrix<double> d_out(1, 3, {1.0, 1.0, 1.0});
+    Matrix<double> d_input = ln.backward(d_out);
+    
+    // Backward should return gradient with same shape as input
+    EXPECT_EQ(d_input.rows(), 1);
+    EXPECT_EQ(d_input.cols(), 3);
+    
+    // Gradients should sum to approximately 0 (due to normalization)
+    double grad_sum = 0.0;
+    for (std::size_t j = 0; j < 3; ++j) {
+        grad_sum += d_input(0, j);
+    }
+    EXPECT_NEAR(grad_sum, 0.0, 1e-5);
+}
+
+TEST(NeuralNets, AddLayerWithNormalization) {
+    MSELoss<double> mse_loss;
+    SGD<double> sgd_optimizer(0.01);
+    NeuralNets<double> nn(sgd_optimizer, mse_loss);
+    ReLU<double> relu;
+    LayerNormalization<double> ln(5);
+    
+    nn.add_layer(3, 5, relu, &ln);
+    
+    EXPECT_EQ(nn.get_num_layers(), 1);
+    EXPECT_NE(nn.get_layer(0).normalization, nullptr);
+}
+
+TEST(NeuralNets, ForwardPassWithNormalization) {
+    MSELoss<double> mse_loss;
+    SGD<double> sgd_optimizer(0.01);
+    NeuralNets<double> nn(sgd_optimizer, mse_loss);
+    ReLU<double> relu;
+    Sigmoid<double> sigmoid;
+    LayerNormalization<double> ln(4);
+    
+    nn.add_layer(2, 4, relu, &ln);   // With normalization
+    nn.add_layer(4, 1, sigmoid);      // Without normalization
+    
+    Matrix<double> X(3, 2, {0.1, 0.2,
+                            0.3, 0.4,
+                            0.5, 0.6});
+    Matrix<double> output = nn.predict(X);
+    
+    EXPECT_EQ(output.rows(), 3);
+    EXPECT_EQ(output.cols(), 1);
+    
+    // Output should be in valid sigmoid range [0, 1]
+    for (std::size_t i = 0; i < output.rows(); ++i) {
+        EXPECT_GE(output(i, 0), 0.0);
+        EXPECT_LE(output(i, 0), 1.0);
+    }
+}
+
+TEST(NeuralNets, TrainWithNormalization) {
+    MSELoss<double> mse_loss;
+    SGD<double> sgd_optimizer(0.1);
+    NeuralNets<double> nn(sgd_optimizer, mse_loss);
+    ReLU<double> relu;
+    Sigmoid<double> sigmoid;
+    LayerNormalization<double> ln(4);
+    
+    nn.add_layer(2, 4, relu, &ln);
+    nn.add_layer(4, 1, sigmoid);
+    
+    Matrix<double> X(4, 2, {0.1, 0.2,
+                            0.3, 0.4,
+                            0.5, 0.6,
+                            0.7, 0.8});
+    Matrix<double> y(4, 1, {0.0,
+                            1.0,
+                            1.0,
+                            0.0});
+    
+    // Save initial gamma/beta
+    Matrix<double> initial_gamma = ln.gamma;
+    Matrix<double> initial_beta = ln.beta;
+    
+    nn.train(X, y, 50, false);
+    
+    // After training, gamma/beta should be updated
+    bool gamma_changed = false;
+    bool beta_changed = false;
+    for (std::size_t j = 0; j < ln.gamma.cols(); ++j) {
+        if (std::abs(ln.gamma(0, j) - initial_gamma(0, j)) > 1e-6) {
+            gamma_changed = true;
+        }
+        if (std::abs(ln.beta(0, j) - initial_beta(0, j)) > 1e-6) {
+            beta_changed = true;
+        }
+    }
+    EXPECT_TRUE(gamma_changed || beta_changed);
 }
 
 int main(int argc, char **argv) {
