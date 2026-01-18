@@ -8,11 +8,16 @@ C++ implementation of matrix multiplication algorithms leveraged into a flexible
 - [Project Structure](#project-structure)
 - [Matrix Multiplication Optimization](#matrix-multiplication-optimization)
   - [Implemented Algorithms](#implemented-algorithms)
+  - [CUDA GPU Acceleration](#cuda-gpu-acceleration)
   - [Benchmarking Results](#benchmarking-results)
 - [Neural Network Framework](#neural-network-framework)
   - [Architecture](#architecture)
   - [Supported Components](#supported-components)
   - [Training Examples](#training-examples)
+- [Python Bindings (PyNN3)](#python-bindings-pynn3)
+  - [Installation](#installation)
+  - [Quick Start](#quick-start)
+  - [API Reference](#api-reference)
 - [Building the Project](#building-the-project)
 - [Running Tests and Benchmarks](#running-tests-and-benchmarks)
 - [Dependencies](#dependencies)
@@ -28,12 +33,14 @@ C++ implementation of matrix multiplication algorithms leveraged into a flexible
 This project consists of two main components:
 
 1. **Optimized Matrix Multiplication Library**: Matrix structure (with basic/algebraic operations, I/O, etc.) and multiple implementations of matrix multiplication with varying optimization strategies, evaluated against OpenBLAS as a reference implementation
-2. **Neural Network Framework**: A flexible, template-based neural network library supporting:
+2. **CUDA GPU Acceleration**: Optional GPU-accelerated matrix multiplication using CUDA with tiled shared memory kernels
+3. **Neural Network Framework**: A flexible, template-based neural network library supporting:
    - Dense layers with customizable activations
    - Multiple activation functions (ReLU, LeakyReLU, Sigmoid, Tanh, Softmax)
    - Loss functions (MSE, Cross-Entropy)
    - Optimizers (SGD with configurable learning rate)
    - Backpropagation
+4. **Python Bindings (PyNN3)**: High-level Python interface using pybind11, allowing seamless integration with NumPy
 
 The library is designed for educational purposes and performance experimentation, demonstrating how low-level optimizations can dramatically improve computational efficiency.
 
@@ -45,28 +52,36 @@ The library is designed for educational purposes and performance experimentation
 neuralnets-3-neuralnets/
 ├── include/
 │   ├── matrix/
-│   │   ├── matrix.hpp          # Matrix class with basic operations
-│   │   ├── matmul.hpp          # Matrix multiplication implementations
-│   │   └── iohelper.hpp        # CSV I/O utilities
+│   │   ├── matrix.hpp              # Matrix class with basic operations
+│   │   ├── matmul.hpp              # Matrix multiplication implementations
+│   │   ├── matmul_cuda.hpp         # CUDA interface (C++ compatible)
+│   │   ├── matmul_cuda.cuh         # CUDA kernel implementations
+│   │   ├── matmul_cuda.cu          # CUDA compilation unit
+│   │   └── iohelper.hpp            # CSV I/O utilities
 │   ├── neuralnets/
-│   │   ├── neuralnets.hpp      # Neural network and layer classes
-│   │   ├── activation.hpp      # Activation functions
-│   │   ├── loss.hpp            # Loss functions
-│   │   ├── optimizer.hpp       # Optimization algorithms
-│   │   └── metrics.hpp         # Performance metrics
+│   │   ├── neuralnets.hpp          # Neural network and layer classes
+│   │   ├── activation.hpp          # Activation functions
+│   │   ├── loss.hpp                # Loss functions
+│   │   ├── optimizer.hpp           # Optimization algorithms
+│   │   └── metrics.hpp             # Performance metrics
+│   ├── bindings/
+│   │   ├── pynn3.cpp               # Python module definition
+│   │   ├── pynn3.hpp               # High-level Python interface
+│   │   └── numpy_matrix_helper.hpp # NumPy <-> Matrix conversion helper
 │   └── utils/
-│       └── bench.hpp           # Benchmarking utilities
+│       └── bench.hpp               # Benchmarking utilities
 ├── tests/
-│   ├── unit/                   # Unit tests
-│   ├── benchmark/              # Benchmark tests
+│   ├── unit/                       # Unit tests
+│   ├── benchmark/                  # Benchmark tests
+│   ├── integration/                # Python integration tests
 │   ├── test_classification_neuralnet.cpp
 │   └── test_regression_neuralnet.cpp
 ├── output/
 │   └── benchmark/
 │       ├── matrix_mult_benchmark_logs.csv
 │       └── plot_benchmark.ipynb    # Benchmark visualization
-├── data/                       # Sample datasets
-├── docs/                       # Documentation
+├── data/                           # Sample datasets
+├── docs/                           # Documentation
 └── CMakeLists.txt
 ```
 
@@ -192,6 +207,79 @@ static Matrix<T> mm(const Matrix<T> &A, const Matrix<T> &B) // default method
 - Industry-standard optimized BLAS library
 - Highly tuned assembly code for specific architectures
 - Serves as performance ceiling for comparison
+
+### CUDA GPU Acceleration
+
+The project includes optional CUDA support for GPU-accelerated matrix multiplication, providing significant speedups for large matrices.
+
+#### Architecture
+
+The CUDA implementation uses a **three-file architecture** to separate concerns:
+
+| File | Purpose |
+|------|---------|
+| `matmul_cuda.hpp` | C++ compatible header (no CUDA syntax) - can be included by any C++ code |
+| `matmul_cuda.cuh` | CUDA implementation with kernels and templates (nvcc only) |
+| `matmul_cuda.cu` | Compilation unit providing linkable symbols |
+
+#### Tiled Shared Memory Kernel
+
+```cuda
+// 16x16 tiled matrix multiplication kernel
+template<typename T>
+__global__ void matmul_tiled_kernel(const T* A, const T* B, T* C,
+                                     size_t M, size_t N, size_t K) {
+    __shared__ T As[TILE_SIZE][TILE_SIZE];
+    __shared__ T Bs[TILE_SIZE][TILE_SIZE];
+    
+    // Load tiles into shared memory
+    // Compute partial products
+    // Accumulate results
+}
+```
+
+**Key Optimizations**:
+- **Shared memory tiling**: Reduces global memory bandwidth requirements
+- **Coalesced memory access**: Threads access consecutive memory locations
+- **Register blocking**: Maximizes arithmetic intensity
+- **Template support**: Works with both `float` and `double` precision
+
+#### Usage
+
+```cpp
+#include "matrix/matmul.hpp"
+
+// CUDA is automatically used when available and beneficial
+Matrix<float> C = MatMul<float>::mm(A, B);
+
+// Or explicitly request CUDA multiplication
+Matrix<float> C = MatMul<float>::mm_cuda(A, B);
+
+// Check CUDA availability
+if (cuda_matmul::isCudaAvailable()) {
+    std::cout << "CUDA device: " << cuda_matmul::getCudaDeviceInfo() << std::endl;
+}
+```
+
+#### Automatic Backend Selection
+
+The `MatMul::mm()` function automatically selects the best backend:
+1. **CUDA**: Used for large matrices when GPU is available
+2. **OpenMP + AVX-512**: CPU fallback with vectorization
+3. **Vanilla**: For very small matrices where overhead dominates
+
+#### Building with CUDA
+
+CUDA support is automatically detected by CMake:
+
+```bash
+cmake ..  # Detects CUDA automatically
+make
+
+# Verify CUDA tests
+./test_matrix_cuda_mult
+```
+
 
 ### Benchmarking Results
 
@@ -348,15 +436,169 @@ nn.train(X_train, y_train, 1000);
 
 ---
 
+## Python Bindings (PyNN3)
+
+The project includes Python bindings via **pybind11**, providing a high-level interface for neural network training and prediction. The Python module is called `pynn3`.
+
+### Design Principles
+
+- **NumPy Integration**: Users work exclusively with NumPy arrays
+- **Hidden Internals**: C++ Matrix implementation is completely hidden
+- **Zero-Copy Output**: Predictions are returned without unnecessary data copying
+- **GIL Release**: Long-running training releases Python's GIL for threading
+
+### Installation
+
+#### Building the Module
+
+```bash
+cd build
+
+# Enable Python bindings
+cmake -DBUILD_PYTHON_BINDINGS=ON ..
+
+# Build the module
+make pynn3
+
+# Module location: build/python/pynn3.cpython-*.so
+```
+
+#### Requirements
+
+```bash
+# System packages (Ubuntu/Debian)
+sudo apt-get install python3-dev
+
+# Python packages
+pip install pybind11 numpy
+```
+
+### Quick Start
+
+```python
+import numpy as np
+import pynn3 as nn
+
+# Prepare data (NumPy arrays)
+X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.float32)
+y = np.array([[0], [1], [1], [0]], dtype=np.float32)
+
+# Create network with optimizer and loss
+model = nn.Network(
+    optimizer=nn.SGD(learning_rate=0.5),
+    loss=nn.MSE()
+)
+
+# Build architecture
+model.add_layer(input_size=2, output_size=4, activation=nn.ReLU())
+model.add_layer(input_size=4, output_size=1, activation=nn.Sigmoid())
+
+# Train
+model.train(X, y, epochs=1000, verbose=True)
+
+# Predict (returns NumPy array)
+predictions = model.predict(X)
+print(predictions)
+```
+
+### API Reference
+
+#### Network Class
+
+```python
+class Network:
+    def __init__(self, optimizer: Optimizer, loss: Loss)
+    def add_layer(self, input_size: int, output_size: int, activation: Activation)
+    def train(self, X: np.ndarray, y: np.ndarray, epochs: int, verbose: bool = True)
+    def predict(self, X: np.ndarray) -> np.ndarray
+    
+    @property
+    def num_layers(self) -> int
+```
+
+#### Optimizers
+
+| Class | Constructor | Description |
+|-------|-------------|-------------|
+| `SGD` | `SGD(learning_rate=0.01)` | Stochastic Gradient Descent |
+| `Adam` | `Adam(learning_rate=0.001, beta1=0.9, beta2=0.999, epsilon=1e-8)` | Adaptive learning rates |
+
+#### Loss Functions
+
+| Class | Description |
+|-------|-------------|
+| `MSE` | Mean Squared Error (regression) |
+| `BinaryCrossEntropy` | Binary classification |
+| `CategoricalCrossEntropy` | Multi-class classification |
+
+#### Activation Functions
+
+| Class | Formula | Best For |
+|-------|---------|----------|
+| `ReLU` | max(0, x) | Hidden layers |
+| `LeakyReLU` | x if x>0 else 0.01x | Preventing dead neurons |
+| `Sigmoid` | 1/(1+e^(-x)) | Binary output |
+| `Tanh` | tanh(x) | Zero-centered output |
+| `Linear` | x | Regression output |
+| `Softmax` | exp(x)/Σexp(x) | Multi-class output |
+
+### Complete Example: Binary Classification
+
+```python
+import numpy as np
+import pynn3 as nn
+
+# Load dataset
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+data = load_breast_cancer()
+X = StandardScaler().fit_transform(data.data).astype(np.float32)
+y = data.target.reshape(-1, 1).astype(np.float32)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+# Create model
+model = nn.Network(nn.Adam(0.001), nn.BinaryCrossEntropy())
+model.add_layer(30, 64, nn.ReLU())
+model.add_layer(64, 32, nn.ReLU())
+model.add_layer(32, 1, nn.Sigmoid())
+
+# Train
+model.train(X_train, y_train, epochs=100, verbose=True)
+
+# Evaluate
+predictions = model.predict(X_test)
+accuracy = np.mean((predictions > 0.5) == y_test)
+print(f"Test Accuracy: {accuracy:.2%}")
+```
+
+### Module Structure
+
+The bindings are organized into three files:
+
+| File | Purpose |
+|------|---------|
+| `numpy_matrix_helper.hpp` | Internal NumPy ↔ Matrix conversion utilities |
+| `pynn3.hpp` | High-level `PyNN3<T>` wrapper class |
+| `pynn3.cpp` | pybind11 module definition |
+
+
+---
+
 ## Building the Project
 
 ### Prerequisites
 
 - **C++ Compiler**: GCC 7+ or Clang 6+ (C++17 support required)
-- **CMake**: Version 3.10 or higher
+- **CMake**: Version 3.18 or higher
 - **OpenMP**: For parallel matrix multiplication
 - **OpenBLAS**: For benchmark comparison
 - **AVX-512**: CPU support required for SIMD optimizations
+- **CUDA Toolkit**: (Optional) Version 11.0+ for GPU acceleration
+- **Python 3**: (Optional) For Python bindings
+- **pybind11**: (Optional) For Python bindings
 - **Doxygen**: (Optional) For generating interactive documentation
 
 ### Build Instructions
@@ -369,18 +611,22 @@ cd neuralnets-3-neuralnets
 # Create build directory
 mkdir build && cd build
 
-# Configure with CMake
+# Configure with CMake (basic)
 cmake ..
+
+# Or configure with Python bindings
+cmake -DBUILD_PYTHON_BINDINGS=ON ..
 
 # Build all targets
 cmake --build .
 ```
 
-
-The project automatically enables:
-- `-std=c++17`: C++17 standard
-- `-mavx512f`: AVX-512 SIMD instructions
-- `-fopenmp`: OpenMP parallelization
+The project automatically:
+- Enables `-std=c++17`: C++17 standard
+- Enables `-mavx512f`: AVX-512 SIMD instructions
+- Enables `-fopenmp`: OpenMP parallelization
+- Detects CUDA and enables GPU acceleration if available
+- Builds Python bindings if `-DBUILD_PYTHON_BINDINGS=ON` is set
 
 
 ### Generate Documentation
@@ -406,8 +652,23 @@ ctest
 ./test_matrix_construct   # Matrix constructors tests
 ./test_matrix_ops         # Matrix operations tests
 ./test_matrix_mult        # Matrix multiplication tests
+./test_matrix_cuda_mult   # CUDA multiplication tests (if CUDA available)
 ./test_neural_nets        # Neural network tests
 ./test_io_helper          # CSV I/O tests
+./test_sgd_optimizer      # SGD optimizer tests
+./test_adam_optimizer     # Adam optimizer tests
+```
+
+### Python Integration Tests
+
+```bash
+cd build
+
+# Set Python path to find the module
+export PYTHONPATH=$PWD/python:$PYTHONPATH
+
+# Run integration test
+python3 ../tests/integration/python_integration.py
 ```
 
 ### Benchmark Suite
@@ -461,6 +722,30 @@ jupyter notebook plot_benchmark.ipynb
 
 ### Optional
 
+- **CUDA Toolkit**: For GPU-accelerated matrix multiplication
+  ```bash
+  # Install CUDA Toolkit from NVIDIA
+  # https://developer.nvidia.com/cuda-downloads
+  
+  # Or via package manager (Ubuntu)
+  sudo apt-get install nvidia-cuda-toolkit
+  ```
+
+- **Python Development Headers**: For Python bindings
+  ```bash
+  sudo apt-get install python3-dev
+  ```
+
+- **pybind11**: For Python bindings
+  ```bash
+  pip install pybind11
+  ```
+
+- **NumPy**: For Python integration
+  ```bash
+  pip install numpy
+  ```
+
 - **GoogleTest**: For unit testing (included as submodule)
 
 - **Jupyter**: For benchmark visualization
@@ -498,13 +783,15 @@ The benchmark results demonstrate several key principles for matrix multiplicati
 ## Future Improvements / Fixes
 
 - [x] Improve code documentation with Doxygen
+- [x] GPU acceleration (CUDA)
+- [x] Additional optimizers (Adam)
+- [x] Develop Python bindings to C++ implementation
 - [ ] Fix call locations for `omp_set_num_threads` (also to test with different numbers of cores)
 - [ ] Refactor `activation.hpp` to include also non-diagonal Jacobian (e.g., SoftMax)
 - [ ] More performance testing on different configurations of the implementations
 - [ ] Improve performance configuration of `mm()` to be closer to OpenBLAS
-- [ ] GPU acceleration (CUDA)
-- [ ] Additional optimizers (e.g., Adam)
-- [ ] Develop Python bindings to C++ implementation
+- [ ] Implement NumPy to C++ Matrix as zero-copy conversion
+- [ ] Add CuBLAS benchmarking
 - [ ] ...
 <!-- - [ ] Convolutional layers
 - [ ] Mini-batch gradient descent
