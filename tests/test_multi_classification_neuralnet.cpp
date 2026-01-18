@@ -1,3 +1,13 @@
+/**
+ * @file test_multi_classification_neuralnet.cpp
+ * @brief Multi-class classification test using Wine Quality dataset
+ * 
+ * This test demonstrates multi-class classification using:
+ * - Softmax activation for output layer
+ * - Categorical Cross-Entropy loss
+ * - Multi-class classification metrics (accuracy, precision, recall)
+ */
+
 #include "matrix/matrix.hpp"
 #include "neuralnets/activation.hpp"
 #include "neuralnets/loss.hpp" 
