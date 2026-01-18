@@ -36,9 +36,11 @@ This project consists of two main components:
 2. **CUDA GPU Acceleration**: Optional GPU-accelerated matrix multiplication using CUDA with tiled shared memory kernels
 3. **Neural Network Framework**: A flexible, template-based neural network library supporting:
    - Dense layers with customizable activations
-   - Multiple activation functions (ReLU, LeakyReLU, Sigmoid, Tanh, Softmax)
-   - Loss functions (MSE, Cross-Entropy)
-   - Optimizers (SGD with configurable learning rate)
+   - Multiple activation functions (ReLU, LeakyReLU, Sigmoid, Tanh, Softmax, Linear)
+   - Loss functions (MSE, Binary Cross-Entropy, Categorical Cross-Entropy)
+   - Optimizers (SGD, Adam)
+   - Preprocessing utilities (One-hot encoding)
+   - Metrics for binary and multi-class classification
    - Backpropagation
 4. **Python Bindings (PyNN3)**: High-level Python interface using pybind11, allowing seamless integration with NumPy
 
@@ -63,7 +65,8 @@ neuralnets-3-neuralnets/
 │   │   ├── activation.hpp          # Activation functions
 │   │   ├── loss.hpp                # Loss functions
 │   │   ├── optimizer.hpp           # Optimization algorithms
-│   │   └── metrics.hpp             # Performance metrics
+│   │   ├── metrics.hpp             # Performance metrics
+│   │   └── preprocessing.hpp       # Data preprocessing utilities
 │   ├── bindings/
 │   │   ├── pynn3.cpp               # Python module definition
 │   │   ├── pynn3.hpp               # High-level Python interface
@@ -74,8 +77,9 @@ neuralnets-3-neuralnets/
 │   ├── unit/                       # Unit tests
 │   ├── benchmark/                  # Benchmark tests
 │   ├── integration/                # Python integration tests
-│   ├── test_classification_neuralnet.cpp
-│   └── test_regression_neuralnet.cpp
+│   ├── test_classification_neuralnet.cpp       # Binary classification
+│   ├── test_regression_neuralnet.cpp           # Regression
+│   └── test_multi_classification_neuralnet.cpp # Multi-class classification
 ├── output/
 │   └── benchmark/
 │       ├── matrix_mult_benchmark_logs.csv
@@ -361,6 +365,7 @@ class NeuralNets {
 | **LeakyReLU** | x if x>0 else 0.01x | 1 if x>0 else 0.01 | Hidden layers (preventing dead neurons) |
 | **Tanh** | tanh(x) | 1 - tanh²(x) | Hidden layers |
 | **Sigmoid** | 1/(1+e^(-x)) | σ(x)(1-σ(x)) | Binary classification output |
+| **Softmax** | e^(x_i) / Σe^(x_j) | Jacobian matrix | Multi-class classification output |
 | **Linear** | x | 1 | Regression output |
 
 #### Loss Functions
@@ -368,14 +373,29 @@ class NeuralNets {
 | Function | Formula | Use Case |
 |----------|---------|----------|
 | **MSE** | (1/n)Σ(ŷ - y)² | Regression |
-| **Cross-Entropy** | -(1/n)Σy·log(ŷ) | Multi-class classification |
 | **Binary Cross-Entropy** | -(1/n)Σ[y·log(ŷ) + (1-y)·log(1-ŷ)] | Binary classification |
+| **Categorical Cross-Entropy** | -(1/n)Σ_i Σ_j y_ij·log(ŷ_ij) | Multi-class classification |
 
 #### Optimizers
 
 | Optimizer | Update Rule | Parameters |
 |-----------|-------------|------------|
 | **SGD** | W ← W - η·∇W | Learning rate (η) |
+| **Adam** | Adaptive moment estimation | Learning rate (η), β₁, β₂, ε |
+
+#### Metrics
+
+| Metric Type | Available Metrics |
+|-------------|------------------|
+| **Binary Classification** | BinaryAccuracy, BinaryPrecision, BinaryRecall |
+| **Multi-Class Classification** | MultiClassAccuracy, MultiClassPrecision (macro), MultiClassRecall (macro) |
+| **Regression** | MeanSquaredError, MeanAbsoluteError |
+
+#### Preprocessing Utilities
+
+| Utility | Methods | Description |
+|---------|---------|-------------|
+| **OneHotEncoder** | fit(), transform(), fit_transform(), inverse_transform() | sklearn-style one-hot encoding for categorical variables |
 
 ### Training Examples
 
@@ -431,6 +451,49 @@ nn.add_layer(64, 32, leaky_relu);
 nn.add_layer(32, output_dim, linear);
 
 nn.train(X_train, y_train, 1000);
+```
+
+#### Multi-Class Classification Example
+
+```cpp
+#include "matrix/matrix.hpp"
+#include "neuralnets/neuralnets.hpp"
+#include "neuralnets/preprocessing.hpp"
+#include "matrix/iohelper.hpp"
+
+int main() {
+    // Load data
+    Matrix<double> X_train = IOHelper<double>::read_csv("X_train.csv", ',', true);
+    Matrix<double> y_train_raw = IOHelper<double>::read_csv("y_train.csv", ',', true);
+    
+    // One-hot encode labels (e.g., classes 0, 1, 2)
+    OneHotEncoder<double> encoder;
+    Matrix<double> y_train = encoder.fit_transform(y_train_raw);
+    std::size_t num_classes = encoder.get_num_classes();
+    
+    // Setup network with Softmax output
+    CategoricalCrossEntropyLoss<double> loss;
+    Adam<double> optimizer(0.01, 0.9, 0.999, 1e-8);
+    NeuralNets<double> nn(optimizer, loss);
+    
+    // Architecture: input → 64 → 32 → num_classes (Softmax)
+    LeakyReLU<double> leaky_relu;
+    Softmax<double> softmax;
+    nn.add_layer(X_train.cols(), 64, leaky_relu);
+    nn.add_layer(64, 32, leaky_relu);
+    nn.add_layer(32, num_classes, softmax);  // Softmax for multi-class
+    
+    // Train
+    nn.train(X_train, y_train, 200, true);
+    
+    // Predict and evaluate
+    Matrix<double> predictions = nn.predict(X_train);  // Probability distributions
+    MultiClassAccuracy<double> accuracy;
+    double acc = accuracy.eval_probs(predictions, y_train);
+    std::cout << "Accuracy: " << acc * 100 << "%" << std::endl;
+    
+    return 0;
+}
 ```
 
 
@@ -694,15 +757,23 @@ jupyter notebook plot_benchmark.ipynb
 
 ### Neural Network Examples
 
-#### Classification Task
+#### Binary Classification (Breast Cancer)
 ```bash
-./test_classification_neuralnet
+./test_classification_neuralnet adam  # or sgd
 ```
+Predicts malignant vs benign tumors using Sigmoid + Binary Cross-Entropy.
 
-#### Regression Task
+#### Regression (Wine Quality)
 ```bash
-./test_regression_neuralnet
+./test_regression_neuralnet adam  # or sgd
 ```
+Predicts continuous wine quality scores using Linear + MSE.
+
+#### Multi-Class Classification (Wine Quality)
+```bash
+./test_multi_classification_neuralnet adam  # or sgd
+```
+Predicts wine quality classes (3-9) using Softmax + Categorical Cross-Entropy with one-hot encoding.
 
 ---
 
@@ -786,8 +857,8 @@ The benchmark results demonstrate several key principles for matrix multiplicati
 - [x] GPU acceleration (CUDA)
 - [x] Additional optimizers (Adam)
 - [x] Develop Python bindings to C++ implementation
+- [x] Refactor `activation.hpp` to include SoftMax
 - [ ] Fix call locations for `omp_set_num_threads` (also to test with different numbers of cores)
-- [ ] Refactor `activation.hpp` to include also non-diagonal Jacobian (e.g., SoftMax)
 - [ ] More performance testing on different configurations of the implementations
 - [ ] Improve performance configuration of `mm()` to be closer to OpenBLAS
 - [ ] Implement NumPy to C++ Matrix as zero-copy conversion
