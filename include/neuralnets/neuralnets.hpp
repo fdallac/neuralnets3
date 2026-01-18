@@ -284,7 +284,7 @@ class NeuralNets {
          * @return Gradient to propagate to previous layer (batch_size x current_layer_input)
          * 
          * Computes:
-         * 1. dZ = gradient ⊙ activation'(Z) (element-wise multiply)
+         * 1. dZ = dL/dZ (chain rule is applied internally in activation.backward)
          * 2. dW = X^T * dZ (weight gradient)
          * 3. db = sum(dZ) over batch (bias gradient)
          * 4. prev_gradient = dZ * W^T (gradient for previous layer)
@@ -292,8 +292,8 @@ class NeuralNets {
          * Updates layer.dW and layer.db for optimizer to use.
          */ 
         static Matrix<T> backward_pass(Matrix<T>& gradient, NeuralLayer<T>& layer)  {
-            // dZ = gradient * activation_derivative (element-wise)
-            Matrix<T> dZ = gradient.elementwise_multiply(layer.activation.backward(layer.Z));
+            // dZ = dL/dZ
+            Matrix<T> dZ = layer.activation.backward(layer.Z, gradient);
 
             // prev_gradient = delta * W^T 
             Matrix<T> prev_gradient = dZ * layer.W.transpose();
