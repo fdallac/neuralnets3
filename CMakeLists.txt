@@ -233,6 +233,61 @@ target_link_libraries(test_benchmark PRIVATE
 )
 
 # -------------------------------------------------
+# Python Bindings (Optional)
+# -------------------------------------------------
+option(BUILD_PYTHON_BINDINGS "Build Python bindings using pybind11" OFF)
+
+if(BUILD_PYTHON_BINDINGS)
+    # Find Python and pybind11
+    find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+    find_package(pybind11 CONFIG QUIET)
+    
+    if(NOT pybind11_FOUND)
+        # Try to find pybind11 via Python
+        execute_process(
+            COMMAND ${Python3_EXECUTABLE} -c "import pybind11; print(pybind11.get_cmake_dir())"
+            OUTPUT_VARIABLE pybind11_DIR
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET
+        )
+        if(pybind11_DIR)
+            find_package(pybind11 CONFIG REQUIRED PATHS ${pybind11_DIR})
+        else()
+            message(FATAL_ERROR "pybind11 not found. Install with: pip install pybind11")
+        endif()
+    endif()
+    
+    # Create the Python module
+    pybind11_add_module(pynn3
+        include/bindings/pynn3.cpp
+    )
+    
+    # No need to set OUTPUT_NAME - module is already named 'pynn3'
+    set_target_properties(pynn3 PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/python"
+    )
+    
+    target_include_directories(pynn3 PRIVATE
+        ${PROJECT_SOURCE_DIR}/include
+    )
+    
+    target_link_libraries(pynn3 PRIVATE
+        matrix
+    )
+    
+    # Copy to bin for easy testing
+    add_custom_command(TARGET pynn3 POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            $<TARGET_FILE:pynn3>
+            ${CMAKE_BINARY_DIR}/bin/
+        COMMENT "Copying pynn3 Python module to bin/"
+    )
+    
+    message(STATUS "Python bindings enabled - module will be built as 'pynn3'")
+endif()
+
+
+# -------------------------------------------------
 # Enable testing
 # -------------------------------------------------
 enable_testing()
