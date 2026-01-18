@@ -13,7 +13,7 @@ X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.float32)
 y = np.array([[0], [1], [1], [0]], dtype=np.float32)
 
 # 2. Create Network with Optimizer and Loss
-model = nn.Network(
+model = nn.NeuralNets(
     optimizer=nn.SGD(learning_rate=0.5),  # or nn.Adam(0.01)
     loss=nn.MSE()                          # or nn.BinaryCrossEntropy()
 )

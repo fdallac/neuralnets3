@@ -484,7 +484,7 @@ X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.float32)
 y = np.array([[0], [1], [1], [0]], dtype=np.float32)
 
 # Create network with optimizer and loss
-model = nn.Network(
+model = nn.NeuralNets(
     optimizer=nn.SGD(learning_rate=0.5),
     loss=nn.MSE()
 )
@@ -506,7 +506,7 @@ print(predictions)
 #### Network Class
 
 ```python
-class Network:
+class NeuralNets:
     def __init__(self, optimizer: Optimizer, loss: Loss)
     def add_layer(self, input_size: int, output_size: int, activation: Activation)
     def train(self, X: np.ndarray, y: np.ndarray, epochs: int, verbose: bool = True)
@@ -560,7 +560,7 @@ y = data.target.reshape(-1, 1).astype(np.float32)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
 # Create model
-model = nn.Network(nn.Adam(0.001), nn.BinaryCrossEntropy())
+model = nn.NeuralNets(nn.Adam(0.001), nn.BinaryCrossEntropy())
 model.add_layer(30, 64, nn.ReLU())
 model.add_layer(64, 32, nn.ReLU())
 model.add_layer(32, 1, nn.Sigmoid())

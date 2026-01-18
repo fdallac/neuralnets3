@@ -39,7 +39,7 @@ PYBIND11_MODULE(pynn3, m) {
             >>> import numpy as np
             >>> 
             >>> # Create network
-            >>> model = nn.Network(nn.SGD(0.1), nn.MSE())
+            >>> model = nn.NeuralNets(nn.SGD(0.1), nn.MSE())
             >>> model.add_layer(2, 4, nn.ReLU())
             >>> model.add_layer(4, 1, nn.Sigmoid())
             >>> 
@@ -203,10 +203,10 @@ PYBIND11_MODULE(pynn3, m) {
         .def(py::init<>(), "Create Softmax activation");
 
     // =========================================================================
-    // Main Network Class
+    // Main Neural Network Class
     // =========================================================================
     
-    py::class_<PyNN3<float>>(m, "Network",
+    py::class_<PyNN3<float>>(m, "NeuralNets",
         R"pbdoc(
             Neural Network with configurable architecture.
             
@@ -218,7 +218,7 @@ PYBIND11_MODULE(pynn3, m) {
                 loss: Loss function for training (MSE, CrossEntropy)
             
             Example:
-                >>> model = nn.Network(nn.Adam(0.001), nn.MSE())
+                >>> model = nn.NeuralNets(nn.Adam(0.001), nn.MSE())
                 >>> model.add_layer(input_size=10, output_size=64, activation=nn.ReLU())
                 >>> model.add_layer(64, 32, nn.ReLU())
                 >>> model.add_layer(32, 1, nn.Linear())
