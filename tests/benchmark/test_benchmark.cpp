@@ -7,6 +7,11 @@ extern "C" {
     #include <cblas.h>
 }
 
+#ifdef CUDA_AVAILABLE
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+#endif
+
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <matrix_size>\n";
@@ -136,6 +141,67 @@ int main(int argc, char** argv) {
 
     // Benchmark CUDA matrix multiplication if available
 #ifdef CUDA_AVAILABLE
+
+
+    // Benchmark cuBLAS matrix multiplication for reference
+    try {
+        // Initialize cuBLAS
+        cublasHandle_t handle;
+        cublasCreate(&handle);
+
+        // Allocate device memory
+        double *d_A, *d_B, *d_C;
+        cudaMalloc(&d_A, N * N * sizeof(double));
+        cudaMalloc(&d_B, N * N * sizeof(double));
+        cudaMalloc(&d_C, N * N * sizeof(double));
+
+        // Copy data to device
+        cudaMemcpy(d_A, A.data(), N * N * sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_B, B.data(), N * N * sizeof(double), cudaMemcpyHostToDevice);
+
+        const double alpha = 1.0;
+        const double beta = 0.0;
+
+        // // Warm-up run
+        // cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+        //             N, N, N,
+        //             &alpha,
+        //             d_B, N,  // Note: cuBLAS uses column-major, so we swap A and B
+        //             d_A, N,
+        //             &beta,
+        //             d_C, N);
+        // cudaDeviceSynchronize();
+
+        double time_cublas = Benchmark::measure_and_report_matmul(
+            std::to_string(N),
+            "cuBLAS",
+            [&]() {
+                cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+                            N, N, N,
+                            &alpha,
+                            d_B, N,
+                            d_A, N,
+                            &beta,
+                            d_C, N);
+                cudaDeviceSynchronize();
+            },
+            report_filename
+        );
+
+        std::cout << "Average time for cuBLAS MM: " << time_cublas << " ms\n";
+
+        // Cleanup
+        cudaFree(d_A);
+        cudaFree(d_B);
+        cudaFree(d_C);
+        cublasDestroy(handle);
+    } catch (const std::exception& e) {
+        std::cerr << "cuBLAS benchmark skipped: " << e.what() << "\n";
+    }
+
+
+
+    // Benchmark CUDA matrix multiplication
     try {
         double time_cuda = Benchmark::measure_and_report_matmul(
             std::to_string(N),

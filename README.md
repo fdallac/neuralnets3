@@ -215,6 +215,13 @@ static Matrix<T> mm(const Matrix<T> &A, const Matrix<T> &B) // default method
 
 The project includes optional CUDA support for GPU-accelerated matrix multiplication, providing significant speedups for large matrices.
 
+#### Features
+
+- **Custom tiled kernel**: Hand-optimized CUDA kernel with shared memory tiling
+- **cuBLAS benchmarking**: Compare against NVIDIA's highly optimized cuBLAS library
+- **Automatic backend selection**: Falls back to CPU when GPU is unavailable
+- **Template support**: Works with both `float` and `double` precision
+
 #### Architecture
 
 The CUDA implementation uses a **three-file architecture** to separate concerns:
@@ -270,6 +277,19 @@ The `MatMul::mm()` function automatically selects the best backend:
 1. **CUDA**: Used for large matrices when GPU is available
 2. **OpenMP + AVX-512**: CPU fallback with vectorization
 3. **Vanilla**: For very small matrices where overhead dominates
+
+#### cuBLAS Benchmarking
+
+The benchmark suite includes cuBLAS comparison when CUDA is available:
+
+```bash
+./test_benchmark 1024  # Includes cuBLAS comparison
+```
+
+cuBLAS serves as the GPU performance ceiling, similar to OpenBLAS for CPU:
+- **NVIDIA-optimized**: Highly tuned for specific GPU architectures
+- **Tensor core support**: Utilizes hardware acceleration when available
+- **Memory-efficient**: Optimized data transfer and caching strategies
 
 #### Building with CUDA
 
@@ -879,10 +899,10 @@ The benchmark results demonstrate several key principles for matrix multiplicati
 - [x] Additional optimizers (Adam)
 - [x] Develop Python bindings to C++ implementation
 - [x] Refactor `activation.hpp` to include SoftMax
+- [x] Add cuBLAS benchmarking
 - [ ] More performance testing on different configurations of the implementations
 - [ ] Improve performance configuration of `mm()` to be closer to OpenBLAS
 - [ ] Implement NumPy to C++ Matrix as zero-copy conversion
-- [ ] Add CuBLAS benchmarking
 - [ ] ...
 <!-- - [ ] Convolutional layers
 - [ ] Mini-batch gradient descent

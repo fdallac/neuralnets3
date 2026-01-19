@@ -87,7 +87,7 @@ if(CUDA_ENABLED)
     
     # Link CUDA runtime library
     find_package(CUDAToolkit REQUIRED)
-    target_link_libraries(matrix_cuda PUBLIC CUDA::cudart)
+    target_link_libraries(matrix_cuda PUBLIC CUDA::cudart CUDA::cublas)
     
     # Link matrix library with CUDA support
     target_link_libraries(matrix INTERFACE matrix_cuda)
