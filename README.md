@@ -23,7 +23,6 @@ C++ implementation of matrix multiplication algorithms leveraged into a flexible
 - [Dependencies](#dependencies)
 - [Performance Analysis](#performance-analysis)
 - [Future Improvements](#future-improvements)
-- [References](#references)
 - [Contributors](#contributors)
 
 ---
@@ -738,7 +737,7 @@ ctest
 ./test_matrix_ops         # Matrix operations tests
 ./test_matrix_mult        # Matrix multiplication tests
 ./test_matrix_cuda_mult   # CUDA multiplication tests (if CUDA available)
-./test_neural_nets        # Neural network tests (including LayerNormalization)
+./test_neural_nets        # Neural network tests
 ./test_io_helper          # CSV I/O tests
 ./test_sgd_optimizer      # SGD optimizer tests
 ./test_adam_optimizer     # Adam optimizer tests
@@ -795,10 +794,7 @@ Predicts continuous wine quality scores using Linear + MSE.
 ```bash
 ./test_multi_classification_neuralnet adam  # or sgd
 ```
-Predicts wine quality classes (3-9) using:
-- Softmax + Categorical Cross-Entropy with one-hot encoding
-- LayerNormalization on hidden layers for training stability
-- Adam optimizer with adaptive learning rates
+Predicts wine quality classes (3-9) using Softmax + Categorical Cross-Entropy with one-hot encoding.
 
 ---
 
@@ -876,61 +872,6 @@ The benchmark results demonstrate several key principles for matrix multiplicati
 
 ---
 
-## Recent Updates
-
-### LayerNormalization Implementation (January 2026)
-
-Added full support for Layer Normalization to stabilize neural network training:
-
-**Features:**
-- ✅ Per-sample feature normalization (mean=0, variance=1)
-- ✅ Learnable scale (γ) and shift (β) parameters
-- ✅ Automatic gradient computation for parameters
-- ✅ Integration with optimizer for parameter updates
-- ✅ Optional per-layer application via pointer interface
-- ✅ Comprehensive unit tests (9 test cases covering forward/backward passes)
-- ✅ Integration tests with multi-class classification
-
-**Usage:**
-```cpp
-LayerNormalization<double> ln(64);  // 64 features
-nn.add_layer(input_size, 64, relu, &ln);  // Add normalization to layer
-```
-
-**Mathematical Details:**
-- Forward: `y = γ·((x-μ)/√(σ²+ε)) + β`
-- Backward: Exact gradient computation through normalization
-- Parameters updated via optimizer (SGD, Adam, etc.)
-
-**Benefits:**
-- Stabilizes training by reducing internal covariate shift
-- Allows higher learning rates
-- Reduces sensitivity to initialization
-- Particularly effective for deep networks
-
-### Bug Fixes and Improvements
-
-**Optimizer Interface (January 2026):**
-- ✅ Fixed Adam optimizer abstract class error
-  - Added proper `update()` override to satisfy base class interface
-  - Separated internal momentum/velocity management into `update_internal()`
-  - All optimizers now properly implement the `Optimizer<T>` base class
-
-**Activation Functions:**
-- ✅ Updated all activation backward passes to new 2-parameter signature
-  - Now takes both input Z and upstream gradient d_A
-  - More flexible and efficient gradient computation
-  - Updated all unit tests accordingly
-
-**Multi-Class Classification:**
-- ✅ Added OneHotEncoder for categorical label encoding
-- ✅ Implemented multi-class metrics (MultiClassAccuracy, Precision, Recall)
-- ✅ Renamed binary metrics for clarity (BinaryAccuracy, etc.)
-- ✅ Added Softmax activation and Categorical Cross-Entropy loss
-- ✅ Complete multi-class classification example with wine quality dataset
-
----
-
 ## Future Improvements / Fixes
 
 - [x] Improve code documentation with Doxygen
@@ -950,14 +891,6 @@ nn.add_layer(input_size, 64, relu, &ln);  // Add normalization to layer
 - [ ] Learning rate scheduling
 - [ ] More loss functions
 - [ ] Data augmentation utilities -->
-
----
-
-## References
-
-- **...**
-
-
 
 ---
 
