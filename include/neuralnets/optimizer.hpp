@@ -28,7 +28,7 @@ class Optimizer {
          * @param weight_gradient Gradient of loss with respect to weights
          * @param layer_id Identifier for the layer (used for stateful optimizers)
          */
-        virtual void update_weights(Matrix<T>& weights, const Matrix<T>& weight_gradient, const std::string& layer_id) = 0;
+        virtual void update_weights(Matrix<T>& weights, const Matrix<T>& weight_gradient, const std::string& layer_id = "") = 0;
         
         /**
          * @brief Update bias vector using computed gradients
@@ -36,7 +36,7 @@ class Optimizer {
          * @param bias_gradient Gradient of loss with respect to biases
          * @param layer_id Identifier for the layer (used for stateful optimizers)
          */
-        virtual void update_bias(Matrix<T>& bias, const Matrix<T>& bias_gradient, const std::string& layer_id) = 0;
+        virtual void update_bias(Matrix<T>& bias, const Matrix<T>& bias_gradient, const std::string& layer_id = "") = 0;
         
         /**
          * @brief Update normalization parameters if applicable
@@ -45,7 +45,7 @@ class Optimizer {
          * @param layer_id Identifier for the layer (used for stateful optimizers)
          * @note Some optimizers (like Adam) maintain internal state that
          */
-        virtual void update_normalization_params(Matrix<T>& norm_params, const Matrix<T>& norm_gradient, const std::string& layer_id) = 0;
+        virtual void update_normalization_params(Matrix<T>& norm_params, const Matrix<T>& norm_gradient, const std::string& layer_id = "") = 0;
 
         /**
          * @brief Advance the optimizer to the next step
@@ -89,7 +89,7 @@ class SGD : public Optimizer<T> {
          * @param parameter Reference to parameter matrix (modified in-place)
          * @param gradient Gradient matrix with same dimensions as parameter
          */
-        void update(Matrix<T>& parameter, const Matrix<T>& gradient, const std::string& layer_id) {
+        void update(Matrix<T>& parameter, const Matrix<T>& gradient, const std::string& layer_id = "") {
             for (std::size_t i = 0; i < parameter.rows(); ++i) {
                 for (std::size_t j = 0; j < parameter.cols(); ++j) {
                     parameter(i, j) -= learning_rate * gradient(i, j);
@@ -107,7 +107,7 @@ class SGD : public Optimizer<T> {
          * @param weight_momentum Momentum matrix for weights (unused in SGD)
          * @param weight_velocity Velocity matrix for weights (unused in SGD)
          */
-        void update_weights(Matrix<T>& weights, const Matrix<T>& weight_gradient, const std::string& layer_id) override {
+        void update_weights(Matrix<T>& weights, const Matrix<T>& weight_gradient, const std::string& layer_id = "") override {
             update(weights, weight_gradient, layer_id);
         }
 
@@ -121,7 +121,7 @@ class SGD : public Optimizer<T> {
          * @param bias_momentum Momentum vector for biases (unused in SGD)
          * @param bias_velocity Velocity vector for biases (unused in SGD)
          */
-        void update_bias(Matrix<T>& bias, const Matrix<T>& bias_gradient, const std::string& layer_id) override {
+        void update_bias(Matrix<T>& bias, const Matrix<T>& bias_gradient, const std::string& layer_id = "") override {
             update(bias, bias_gradient, layer_id);
         }
 
@@ -134,7 +134,7 @@ class SGD : public Optimizer<T> {
          * @param norm_gradient Gradient matrix with same dimensions as norm_params
          * @param layer_id Identifier for the layer (used for stateful optimizers)
          */
-        void update_normalization_params(Matrix<T>& norm_params, const Matrix<T>& norm_gradient, const std::string& layer_id) override {
+        void update_normalization_params(Matrix<T>& norm_params, const Matrix<T>& norm_gradient, const std::string& layer_id = "") override {
             update(norm_params, norm_gradient, layer_id);
         }
 
@@ -178,7 +178,7 @@ class Adam : public Optimizer<T> {
          * @param velocity Second moment estimate matrix
          * @param layer_id Identifier for the layer (used for stateful optimizers)
          */
-        void update(Matrix<T>& parameter, const Matrix<T>& gradient, Matrix<T>& momentum, Matrix<T>& velocity, const std::string& layer_id) {
+        void update(Matrix<T>& parameter, const Matrix<T>& gradient, Matrix<T>& momentum, Matrix<T>& velocity, const std::string& layer_id = "") {
             for (std::size_t i = 0; i < parameter.rows(); ++i) {
                 for (std::size_t j = 0; j < parameter.cols(); ++j) {
                     // Update biased first moment estimate
@@ -202,7 +202,7 @@ class Adam : public Optimizer<T> {
          * @param weight_gradient Gradient matrix with same dimensions as weights
          * @param layer_id Identifier for the layer (used for stateful optimizers)
          */
-        void update_weights(Matrix<T>& weights, const Matrix<T>& weight_gradient, const std::string& layer_id) override {
+        void update_weights(Matrix<T>& weights, const Matrix<T>& weight_gradient, const std::string& layer_id = "") override {
             auto& weight_momentum = this->momentum_map[&weights];
             auto& weight_velocity = this->velocity_map[&weights];
 
@@ -220,7 +220,7 @@ class Adam : public Optimizer<T> {
          * @param bias_gradient Gradient vector with same dimensions as bias
          * @param layer_id Identifier for the layer (used for stateful optimizers)
          */
-        void update_bias(Matrix<T>& bias, const Matrix<T>& bias_gradient, const std::string& layer_id) override {
+        void update_bias(Matrix<T>& bias, const Matrix<T>& bias_gradient, const std::string& layer_id = "") override {
             auto& bias_momentum = this->momentum_map[&bias];
             auto& bias_velocity = this->velocity_map[&bias];
 
@@ -239,7 +239,7 @@ class Adam : public Optimizer<T> {
          * @param norm_gradient Gradient matrix with same dimensions as norm_params
          * @param layer_id Identifier for the layer (used for stateful optimizers)
          */
-        void update_normalization_params(Matrix<T>& norm_params, const Matrix<T>& norm_gradient, const std::string& layer_id) override {
+        void update_normalization_params(Matrix<T>& norm_params, const Matrix<T>& norm_gradient, const std::string& layer_id = "") override {
             auto& norm_momentum = this->momentum_map[&norm_params];
             auto& norm_velocity = this->velocity_map[&norm_params];
 
