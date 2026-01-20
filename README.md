@@ -21,7 +21,6 @@ C++ implementation of matrix multiplication algorithms leveraged into a flexible
 - [Building the Project](#building-the-project)
 - [Running Tests and Benchmarks](#running-tests-and-benchmarks)
 - [Dependencies](#dependencies)
-- [Performance Analysis](#performance-analysis)
 - [Future Improvements](#future-improvements)
 - [Contributors](#contributors)
 
@@ -893,31 +892,6 @@ Predicts wine quality classes (3-9) using Softmax + Categorical Cross-Entropy wi
   ```bash
   pip install ipykernel pandas matplotlib
   ```
-
----
-
-## Key Insights (from performance analysis)
-
-The benchmark results demonstrate several key principles for matrix multiplication:
-
-1. **Algorithm selection matters**
-
-   No single implementation is optimal across all problem sizes. Simple algorithms tend to perform well for small matrices due to low overhead, while more sophisticated optimization strategies become advantageous as problem size increases.
-
-2. **Data locality is critical**
-
-   Performance is strongly influenced by memory access patterns. Techniques such as cache blocking and data layout transformations improve spatial and temporal locality, reducing memory latency and improving effective throughput.
-
-3. **Parallelization involves trade-offs**
-
-   Multi-threading introduces non-negligible overhead and is therefore most effective for sufficiently large workloads. When the problem size justifies it, parallel execution can significantly improve performance by exploiting available CPU cores.
-
-4. **Vectorization enables hardware-level parallelism**
-
-   SIMD instructions allow multiple arithmetic operations to be performed simultaneously. Their effectiveness depends on regular data access patterns and appropriate memory organization, making them particularly well-suited for dense, compute-intensive kernels.
-
-
-
 
 ---
 
