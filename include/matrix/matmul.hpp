@@ -9,6 +9,9 @@
  * - SIMD_AVX512: Vectorized using AVX-512 intrinsics (float/double only)
  * - OpenMP: Parallelized using OpenMP
  * - SIMD_OpenMP_Tile: Combines tiling, SIMD, and OpenMP
+ * - CUDA: GPU-accelerated multiplication using CUDA
+ * - CUDA_OpenMP: Hybrid GPU + CPU parallelism
+ * @tparam T Numeric type (float, double, int, etc.)
  */
 
 #pragma once
@@ -43,7 +46,8 @@ enum class MatMulMethod {
     OpenMP,         ///< Multi-threaded with OpenMP
     SIMD_OpenMP_Tile, ///< Best combination: SIMD + OpenMP + Tiling
     CUDA,           ///< GPU acceleration with CUDA
-    CUDA_OpenMP     ///< Hybrid GPU + CPU parallelism
+    CUDA_OpenMP,    ///< Hybrid GPU + CPU parallelism
+    Auto            ///< Automatic selection based on matrix sizes
 };
 
 /**
@@ -60,16 +64,41 @@ public:
      * @brief Main interface for matrix multiplication
      * @param A Left-hand matrix (m x k)
      * @param B Right-hand matrix (k x n)
-     * @param method Algorithm to use (default: Vanilla)
+     * @param method Algorithm to use (default: Auto)
      * @return Result matrix C = A * B (m x n)
      * @throws std::invalid_argument if A.cols() != B.rows()
      * 
      * Dispatches to specific implementation based on method parameter.
-     * Recommended: MatMulMethod::SIMD_OpenMP_Tile for best performance.
+     * Recommended: MatMulMethod::Auto for automatic selection.
      */
     static Matrix<T> mm(const Matrix<T>& A, const Matrix<T>& B,
-                 MatMulMethod method = MatMulMethod::SIMD_OpenMP_Tile) { 
-                    
+                 MatMulMethod method = MatMulMethod::Auto) { 
+
+        if (method == MatMulMethod::Auto) {
+            // Heuristic for automatic method selection
+            std::size_t volume = A.rows() * A.cols() * B.cols();
+            
+            if (volume <= 128 * 128 * 128) {
+                // Small matrices: use SIMD implementation
+                method = MatMulMethod::SIMD_AVX512;
+            } else if (volume <= 1024 * 1024 * 1024) {        
+                // Medium matrices: use pure CUDA if available, else SIMD + OpenMP
+#ifdef CUDA_AVAILABLE
+                method = MatMulMethod::CUDA;
+#else
+                method = MatMulMethod::SIMD_OpenMP_Tile;
+#endif
+            }
+        } else {
+                // Large matrices: use hybrid CUDA + OpenMP if available, else SIMD + OpenMP
+#ifdef CUDA_AVAILABLE
+                method = MatMulMethod::CUDA_OpenMP;
+#else
+                method = MatMulMethod::SIMD_OpenMP_Tile;
+#endif
+        }
+        
+        // Dispatch to selected method
         switch (method) {
             case MatMulMethod::Vanilla:
                 return mm_vanilla(A, B);
