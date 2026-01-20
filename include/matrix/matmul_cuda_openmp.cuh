@@ -88,7 +88,7 @@ inline void checkCudaError(cudaError_t err, const char* msg) {
 
 
 /**
- * @brief High-performance GEMM kernel with register blocking
+ * @brief Matrix multiplication kernel with register blocking
  * 
  * This kernel implements a 2D register-blocked matrix multiplication:
  * - Each thread block computes a BM×BN tile of C
@@ -266,7 +266,7 @@ __global__ void matmul_simple_kernel(
 /**
  * @brief Matrix multiplication using CUDA streams and OpenMP
  * 
- * Key optimizations:
+ * Key features:
  * 1. Register-blocked kernel for high arithmetic intensity
  * 2. Multiple CUDA streams for PCIe overlap
  * 3. OpenMP for stream management
