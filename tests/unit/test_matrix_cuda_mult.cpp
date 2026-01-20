@@ -297,6 +297,264 @@ TEST_F(CUDAMatrixMultiplication, VeryLargeMatrixFloat) {
 }
 
 
+// ============================================================================
+// CUDA + OpenMP Hybrid Tests
+// ============================================================================
+
+TEST_F(CUDAMatrixMultiplication, HybridSmallFloatMatrices) {
+    std::vector<float> dataA = {
+        1.0f, 2.0f, 3.0f,
+        4.0f, 5.0f, 6.0f
+    };
+    std::vector<float> dataB = {
+        7.0f, 8.0f,
+        9.0f, 10.0f,
+        11.0f, 12.0f
+    };
+    Matrix<float> A(2, 3, dataA);
+    Matrix<float> B(3, 2, dataB);
+    
+    Matrix<float> C_hybrid = MatMul<float>::mm(A, B, MatMulMethod::CUDA_OpenMP);
+    Matrix<float> C_ref = MatMul<float>::mm(A, B, MatMulMethod::Vanilla);
+    
+    EXPECT_EQ(C_hybrid.rows(), 2);
+    EXPECT_EQ(C_hybrid.cols(), 2);
+    EXPECT_TRUE(matricesEqual(C_hybrid, C_ref));
+}
+
+
+TEST_F(CUDAMatrixMultiplication, HybridSmallDoubleMatrices) {
+    std::vector<double> dataA = {
+        1.0, 2.0, 3.0,
+        4.0, 5.0, 6.0
+    };
+    std::vector<double> dataB = {
+        7.0, 8.0,
+        9.0, 10.0,
+        11.0, 12.0
+    };
+    Matrix<double> A(2, 3, dataA);
+    Matrix<double> B(3, 2, dataB);
+    
+    Matrix<double> C_hybrid = MatMul<double>::mm(A, B, MatMulMethod::CUDA_OpenMP);
+    Matrix<double> C_ref = MatMul<double>::mm(A, B, MatMulMethod::Vanilla);
+    
+    EXPECT_EQ(C_hybrid.rows(), 2);
+    EXPECT_EQ(C_hybrid.cols(), 2);
+    EXPECT_TRUE(matricesEqual(C_hybrid, C_ref, 1e-10));
+}
+
+
+TEST_F(CUDAMatrixMultiplication, HybridMediumMatrixFloat) {
+    const std::size_t M = 64;
+    const std::size_t K = 32;
+    const std::size_t N = 48;
+    
+    std::vector<float> dataA(M * K);
+    std::vector<float> dataB(K * N);
+    
+    for (std::size_t i = 0; i < M * K; ++i) {
+        dataA[i] = static_cast<float>(i % 100) / 10.0f;
+    }
+    for (std::size_t i = 0; i < K * N; ++i) {
+        dataB[i] = static_cast<float>(i % 100) / 10.0f;
+    }
+    
+    Matrix<float> A(M, K, dataA);
+    Matrix<float> B(K, N, dataB);
+    
+    Matrix<float> C_hybrid = MatMul<float>::mm(A, B, MatMulMethod::CUDA_OpenMP);
+    Matrix<float> C_ref = MatMul<float>::mm(A, B, MatMulMethod::Vanilla);
+    
+    EXPECT_EQ(C_hybrid.rows(), M);
+    EXPECT_EQ(C_hybrid.cols(), N);
+    EXPECT_TRUE(matricesEqual(C_hybrid, C_ref, 1e-3f));
+}
+
+
+TEST_F(CUDAMatrixMultiplication, HybridMediumMatrixDouble) {
+    const std::size_t M = 32;
+    const std::size_t K = 48;
+    const std::size_t N = 40;
+    
+    std::vector<double> dataA(M * K);
+    std::vector<double> dataB(K * N);
+    
+    for (std::size_t i = 0; i < M * K; ++i) {
+        dataA[i] = static_cast<double>(i % 100) / 10.0;
+    }
+    for (std::size_t i = 0; i < K * N; ++i) {
+        dataB[i] = static_cast<double>(i % 100) / 10.0;
+    }
+    
+    Matrix<double> A(M, K, dataA);
+    Matrix<double> B(K, N, dataB);
+    
+    Matrix<double> C_hybrid = MatMul<double>::mm(A, B, MatMulMethod::CUDA_OpenMP);
+    Matrix<double> C_ref = MatMul<double>::mm(A, B, MatMulMethod::Vanilla);
+    
+    EXPECT_EQ(C_hybrid.rows(), M);
+    EXPECT_EQ(C_hybrid.cols(), N);
+    EXPECT_TRUE(matricesEqual(C_hybrid, C_ref, 1e-8));
+}
+
+
+TEST_F(CUDAMatrixMultiplication, HybridLargeMatrixFloat) {
+    // Test with larger matrices that benefit from stream-based parallelism
+    const std::size_t M = 512;
+    const std::size_t K = 256;
+    const std::size_t N = 512;
+    
+    std::vector<float> dataA(M * K);
+    std::vector<float> dataB(K * N);
+    
+    for (std::size_t i = 0; i < M * K; ++i) {
+        dataA[i] = static_cast<float>((i * 7) % 100) / 50.0f - 1.0f;
+    }
+    for (std::size_t i = 0; i < K * N; ++i) {
+        dataB[i] = static_cast<float>((i * 13) % 100) / 50.0f - 1.0f;
+    }
+    
+    Matrix<float> A(M, K, dataA);
+    Matrix<float> B(K, N, dataB);
+    
+    Matrix<float> C_hybrid = MatMul<float>::mm(A, B, MatMulMethod::CUDA_OpenMP);
+    Matrix<float> C_ref = MatMul<float>::mm(A, B, MatMulMethod::Optimized);
+    
+    EXPECT_EQ(C_hybrid.rows(), M);
+    EXPECT_EQ(C_hybrid.cols(), N);
+    EXPECT_TRUE(matricesEqual(C_hybrid, C_ref, 1e-2f));
+}
+
+
+TEST_F(CUDAMatrixMultiplication, HybridLargeMatrixDouble) {
+    // Test with larger matrices using stream-based parallelism
+    const std::size_t M = 256;
+    const std::size_t K = 128;
+    const std::size_t N = 256;
+    
+    std::vector<double> dataA(M * K);
+    std::vector<double> dataB(K * N);
+    
+    for (std::size_t i = 0; i < M * K; ++i) {
+        dataA[i] = static_cast<double>((i * 11) % 100) / 50.0 - 1.0;
+    }
+    for (std::size_t i = 0; i < K * N; ++i) {
+        dataB[i] = static_cast<double>((i * 17) % 100) / 50.0 - 1.0;
+    }
+    
+    Matrix<double> A(M, K, dataA);
+    Matrix<double> B(K, N, dataB);
+    
+    Matrix<double> C_hybrid = MatMul<double>::mm(A, B, MatMulMethod::CUDA_OpenMP);
+    Matrix<double> C_ref = MatMul<double>::mm(A, B, MatMulMethod::Optimized);
+    
+    EXPECT_EQ(C_hybrid.rows(), M);
+    EXPECT_EQ(C_hybrid.cols(), N);
+    EXPECT_TRUE(matricesEqual(C_hybrid, C_ref, 1e-7));
+}
+
+
+TEST_F(CUDAMatrixMultiplication, HybridNonSquareTileBoundary) {
+    // Test matrix dimensions that don't align with block boundaries
+    const std::size_t M = 517;  // Larger than BLOCK_SIZE (512)
+    const std::size_t K = 133;  // Not divisible by tile size
+    const std::size_t N = 267;
+    
+    std::vector<float> dataA(M * K);
+    std::vector<float> dataB(K * N);
+    
+    for (std::size_t i = 0; i < M * K; ++i) {
+        dataA[i] = static_cast<float>(i % 10);
+    }
+    for (std::size_t i = 0; i < K * N; ++i) {
+        dataB[i] = static_cast<float>(i % 10);
+    }
+    
+    Matrix<float> A(M, K, dataA);
+    Matrix<float> B(K, N, dataB);
+    
+    Matrix<float> C_hybrid = MatMul<float>::mm(A, B, MatMulMethod::CUDA_OpenMP);
+    Matrix<float> C_ref = MatMul<float>::mm(A, B, MatMulMethod::Optimized);
+    
+    EXPECT_EQ(C_hybrid.rows(), M);
+    EXPECT_EQ(C_hybrid.cols(), N);
+    EXPECT_TRUE(matricesEqual(C_hybrid, C_ref, 1e-2f));
+}
+
+
+TEST_F(CUDAMatrixMultiplication, HybridVsPlainCUDA) {
+    // Compare hybrid approach with plain CUDA on moderately large matrices
+    const std::size_t M = 256;
+    const std::size_t K = 256;
+    const std::size_t N = 256;
+    
+    std::vector<float> dataA(M * K);
+    std::vector<float> dataB(K * N);
+    
+    for (std::size_t i = 0; i < M * K; ++i) {
+        dataA[i] = static_cast<float>(i % 100) / 10.0f;
+    }
+    for (std::size_t i = 0; i < K * N; ++i) {
+        dataB[i] = static_cast<float>(i % 100) / 10.0f;
+    }
+    
+    Matrix<float> A(M, K, dataA);
+    Matrix<float> B(K, N, dataB);
+    
+    Matrix<float> C_hybrid = MatMul<float>::mm(A, B, MatMulMethod::CUDA_OpenMP);
+    Matrix<float> C_cuda = MatMul<float>::mm(A, B, MatMulMethod::CUDA);
+    
+    EXPECT_EQ(C_hybrid.rows(), M);
+    EXPECT_EQ(C_hybrid.cols(), N);
+    // Both should produce identical results
+    EXPECT_TRUE(matricesEqual(C_hybrid, C_cuda, 1e-4f));
+}
+
+
+TEST_F(CUDAMatrixMultiplication, HybridRectangularMatrix) {
+    // Test rectangular matrices with hybrid approach
+    const std::size_t M = 384;
+    const std::size_t K = 192;
+    const std::size_t N = 256;
+    
+    std::vector<double> dataA(M * K);
+    std::vector<double> dataB(K * N);
+    
+    for (std::size_t i = 0; i < M * K; ++i) {
+        dataA[i] = static_cast<double>(i % 50) / 25.0 - 1.0;
+    }
+    for (std::size_t i = 0; i < K * N; ++i) {
+        dataB[i] = static_cast<double>(i % 50) / 25.0 - 1.0;
+    }
+    
+    Matrix<double> A(M, K, dataA);
+    Matrix<double> B(K, N, dataB);
+    
+    Matrix<double> C_hybrid = MatMul<double>::mm(A, B, MatMulMethod::CUDA_OpenMP);
+    Matrix<double> C_ref = MatMul<double>::mm(A, B, MatMulMethod::Optimized);
+    
+    EXPECT_EQ(C_hybrid.rows(), M);
+    EXPECT_EQ(C_hybrid.cols(), N);
+    EXPECT_TRUE(matricesEqual(C_hybrid, C_ref, 1e-7));
+}
+
+
+TEST_F(CUDAMatrixMultiplication, HybridIncompatibleDimensions) {
+    std::vector<float> dataA = {
+        1.0f, 2.0f,
+        3.0f, 4.0f
+    };
+    std::vector<float> dataB = {
+        5.0f, 6.0f, 7.0f
+    };
+    Matrix<float> A(2, 2, dataA);
+    Matrix<float> B(1, 3, dataB);
+    
+    EXPECT_THROW(MatMul<float>::mm(A, B, MatMulMethod::CUDA_OpenMP), std::invalid_argument);
+}
+
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

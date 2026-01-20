@@ -42,7 +42,8 @@ enum class MatMulMethod {
     SIMD_AVX512,    ///< AVX-512 vectorization (float/double only)
     OpenMP,         ///< Multi-threaded with OpenMP
     Optimized,      ///< Best combination of optimizations
-    CUDA            ///< GPU acceleration (not implemented)
+    CUDA,           ///< GPU acceleration with CUDA
+    CUDA_OpenMP     ///< Hybrid GPU + CPU parallelism
 };
 
 /**
@@ -99,6 +100,13 @@ public:
                 return mm_cuda(A, B);
 #else
                 throw std::invalid_argument("CUDA method selected but not compiled with nvcc");
+#endif
+
+            case MatMulMethod::CUDA_OpenMP:
+#ifdef CUDA_AVAILABLE
+                return mm_cuda_openmp(A, B);
+#else
+                throw std::invalid_argument("CUDA_OpenMP method selected but not compiled with nvcc");
 #endif
             
             // Future methods can be added here
@@ -923,6 +931,72 @@ public:
     }
 
 
+    /**
+     * @brief Hybrid CUDA + OpenMP matrix multiplication
+     * @param A Left-hand matrix (M x K)
+     * @param B Right-hand matrix (K x N)
+     * @return Result matrix C = A * B (M x N)
+     * @throws std::invalid_argument if A.cols() != B.rows()
+     * @throws std::runtime_error if CUDA is not available
+     * 
+     * Algorithm: Heterogeneous computing approach combining GPU and CPU parallelism.
+     * Divides the workload into horizontal strips (row blocks) processed by multiple CUDA streams.
+     * 
+     * **OpenMP's Role** (High-Level Task Parallelism):
+     * - Divides the matrix into horizontal strips (row blocks)
+     * - Manages multiple CUDA streams for concurrent execution
+     * - Orchestrates asynchronous data transfers
+     * - Handles work distribution across streams
+     * 
+     * **CUDA's Role** (Fine-Grained Parallelism):
+     * - Performs tiled matrix multiplication on each block
+     * - Uses shared memory to reduce global memory bandwidth
+     * - Thousands of threads work in parallel on each tile
+     * - Coalesced memory access patterns for efficiency
+     * 
+     * **Memory Management Strategy**:
+     * - Small matrices: Unified Memory (cudaMallocManaged) for simplicity
+     * - Large matrices: Explicit memory management with stream-based transfers
+     * 
+     * **Pipeline Execution**:
+     * While GPU computes block i, the next block i+1 is transferred,
+     * achieving near-optimal overlap of computation and data movement.
+     * 
+     * 
+     * @see matmul_cuda_openmp.cuh for detailed implementation
+     */
+    static Matrix<T> mm_cuda_openmp(const Matrix<T>& A, const Matrix<T>& B) {
+        if (A.cols() != B.rows()) {
+            throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
+        }
+        
+        Matrix<T> C(A.rows(), B.cols());
+
+#ifdef CUDA_AVAILABLE
+        // Check if CUDA is available at runtime
+        if (!cuda_matmul::isCudaAvailable()) {
+            throw std::runtime_error("No CUDA-capable device found");
+        }
+        
+        // Only float and double are supported
+        if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>) {
+            cuda_matmul::matmul_cuda_openmp_wrapper<T>(
+                A.data(), 
+                B.data(), 
+                C.data(),
+                A.rows(), 
+                B.cols(), 
+                A.cols()
+            );
+        } else {
+            throw std::invalid_argument("CUDA+OpenMP matrix multiplication only supports float and double types");
+        }
+#else
+        throw std::runtime_error("CUDA support not compiled. Recompile with CMake and ensure CUDA toolkit is installed.");
+#endif
+
+        return C;
+    }
 
 
 };

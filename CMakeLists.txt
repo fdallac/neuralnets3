@@ -69,6 +69,7 @@ if(CUDA_ENABLED)
     add_library(matrix_cuda STATIC
         include/matrix/matmul_cuda.cu
         include/matrix/matmul_cuda.cuh
+        include/matrix/matmul_cuda_openmp.cuh
     )
     
     target_include_directories(matrix_cuda PUBLIC
@@ -81,13 +82,14 @@ if(CUDA_ENABLED)
         POSITION_INDEPENDENT_CODE ON
     )
     
+    # Enable OpenMP for CUDA+OpenMP hybrid implementation
     target_compile_options(matrix_cuda PRIVATE
-        $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-fPIC>
+        $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-fPIC,-fopenmp>
     )
     
-    # Link CUDA runtime library
+    # Link CUDA runtime library and OpenMP
     find_package(CUDAToolkit REQUIRED)
-    target_link_libraries(matrix_cuda PUBLIC CUDA::cudart CUDA::cublas)
+    target_link_libraries(matrix_cuda PUBLIC CUDA::cudart CUDA::cublas OpenMP::OpenMP_CXX)
     
     # Link matrix library with CUDA support
     target_link_libraries(matrix INTERFACE matrix_cuda)

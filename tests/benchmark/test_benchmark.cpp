@@ -214,6 +214,20 @@ int main(int argc, char** argv) {
     } catch (const std::exception& e) {
         std::cerr << "CUDA benchmark skipped: " << e.what() << "\n";
     }
+
+    // Benchmark CUDA+OpenMP hybrid matrix multiplication
+    try {
+        double time_cuda_openmp = Benchmark::measure_and_report_matmul(
+            std::to_string(N),
+            "CUDA_OpenMP",
+            [&]() {Matrix<double> C = MatMul<double>::mm(A, B, MatMulMethod::CUDA_OpenMP);},
+            report_filename
+        );
+
+        std::cout << "Average time for CUDA+OpenMP MM: " << time_cuda_openmp << " ms\n";
+    } catch (const std::exception& e) {
+        std::cerr << "CUDA+OpenMP benchmark skipped: " << e.what() << "\n";
+    }
 #endif
 
     std::cout << "Benchmark completed. Results saved to " << report_filename << "\n";

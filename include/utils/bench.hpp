@@ -26,7 +26,7 @@ class Benchmark {
         /**
          * @brief Measure average execution time of a function
          * @param func Function to benchmark (takes no arguments, returns void)
-         * @param trials Number of timed executions (default: 5)
+         * @param trials Number of timed executions (default: 3)
          * @param warmup Number of untimed warm-up runs (default: 1)
          * @return Average execution time in milliseconds
          * 
@@ -35,7 +35,7 @@ class Benchmark {
          */
         static double measure(
             const std::function<void()>& func,
-            int trials = 5,
+            int trials = 3,
             int warmup = 1
         ) {
             // Warm-up runs (not timed)
@@ -66,7 +66,7 @@ class Benchmark {
          * @param matmul_method Name of multiplication method being tested
          * @param func Function to benchmark
          * @param report_filename CSV file to append results to
-         * @param trials Number of timed executions (default: 5)
+         * @param trials Number of timed executions (default: 3)
          * @param warmup Number of warm-up runs (default: 1)
          * @return Average execution time in milliseconds
          * @throws std::runtime_error if file cannot be opened
@@ -79,7 +79,7 @@ class Benchmark {
             const std::string& matmul_method,
             const std::function<void()>& func,
             const std::string& report_filename,
-            int trials = 5,
+            int trials = 3,
             int warmup = 1
         ) {
             double avg_time_ms = measure(func, trials, warmup);

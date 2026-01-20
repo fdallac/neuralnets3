@@ -57,6 +57,7 @@ neuralnets-3-neuralnets/
 │   │   ├── matmul.hpp              # Matrix multiplication implementations
 │   │   ├── matmul_cuda.hpp         # CUDA interface (C++ compatible)
 │   │   ├── matmul_cuda.cuh         # CUDA kernel implementations
+|   |   ├── matmul_cuda_openmp.cuh  # CUDA + OpenMP kernel implementations
 │   │   ├── matmul_cuda.cu          # CUDA compilation unit
 │   │   └── iohelper.hpp            # CSV I/O utilities
 │   ├── neuralnets/
@@ -215,21 +216,15 @@ static Matrix<T> mm(const Matrix<T> &A, const Matrix<T> &B) // default method
 
 The project includes optional CUDA support for GPU-accelerated matrix multiplication, providing significant speedups for large matrices.
 
-#### Features
-
-- **Custom tiled kernel**: Hand-optimized CUDA kernel with shared memory tiling
-- **cuBLAS benchmarking**: Compare against NVIDIA's highly optimized cuBLAS library
-- **Automatic backend selection**: Falls back to CPU when GPU is unavailable
-- **Template support**: Works with both `float` and `double` precision
-
 #### Architecture
 
-The CUDA implementation uses a **three-file architecture** to separate concerns:
+The CUDA implementation uses a **four-file architecture** to separate concerns:
 
 | File | Purpose |
 |------|---------|
 | `matmul_cuda.hpp` | C++ compatible header (no CUDA syntax) - can be included by any C++ code |
 | `matmul_cuda.cuh` | CUDA implementation with kernels and templates (nvcc only) |
+| `matmul_cuda_openmp.cuh` | Hybrid CUDA+OpenMP implementation for heterogeneous computing |
 | `matmul_cuda.cu` | Compilation unit providing linkable symbols |
 
 #### Tiled Shared Memory Kernel
@@ -254,16 +249,60 @@ __global__ void matmul_tiled_kernel(const T* A, const T* B, T* C,
 - **Register blocking**: Maximizes arithmetic intensity
 - **Template support**: Works with both `float` and `double` precision
 
+#### CUDA + OpenMP Hybrid Implementation
+
+The project includes a heterogeneous computing implementation that leverages both GPU and multi-core CPU:
+
+```
+┌────────────────────────────────────────────────────────┐
+│                  OpenMP Thread Pool                    │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐    │
+│  │Thread 0 │  │Thread 1 │  │Thread 2 │  │Thread 3 │    │
+│  │Stream 0 │  │Stream 1 │  │Stream 2 │  │Stream 3 │    │
+│  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘    │
+└───────┼───────────┼───────────┼───────────┼────────────┘
+        │           │           │           │
+        ▼           ▼           ▼           ▼
+┌────────────────────────────────────────────────────────┐
+│                   GPU (CUDA Kernels)                   │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐    │
+│  │ Block 0 │  │ Block 1 │  │ Block 2 │  │ Block 3 │    │
+│  └─────────┘  └─────────┘  └─────────┘  └─────────┘    │
+└────────────────────────────────────────────────────────┘
+```
+
+**Design Principles**:
+
+| Component | Role |
+|-----------|------|
+| **OpenMP** | High-level task parallelism: divides matrices into row blocks, manages CUDA streams, orchestrates async transfers |
+| **CUDA** | Fine-grained parallelism: register-blocked multiplication, 256 threads per block computing 8×8 outputs each |
+| **Streams** | Pipeline execution: overlap data transfer with computation |
+
+**Memory Hierarchy**:
+```
+Global Memory → Shared Memory (128×8 tiles) → Registers (8×8 outputs) → Global Memory
+              coalesced loads              broadcast access        coalesced stores
+```
+
+**Pipeline Execution**:
+```
+Time →
+Stream 0: [Copy A0] [Compute C0] [Copy C0]
+Stream 1:          [Copy A1] [Compute C1] [Copy C1]
+Stream 2:                   [Copy A2] [Compute C2] [Copy C2]
+```
+
 #### Usage
 
 ```cpp
 #include "matrix/matmul.hpp"
 
-// CUDA is automatically used when available and beneficial
-Matrix<float> C = MatMul<float>::mm(A, B);
+// Pure CUDA multiplication
+Matrix<float> C1 = MatMul<float>::mm(A, B, MatMulMethod::CUDA);
 
-// Or explicitly request CUDA multiplication
-Matrix<float> C = MatMul<float>::mm_cuda(A, B);
+// Hybrid CUDA+OpenMP multiplication (recommended for large matrices)
+Matrix<float> C2 = MatMul<float>::mm(A, B, MatMulMethod::CUDA_OpenMP);
 
 // Check CUDA availability
 if (cuda_matmul::isCudaAvailable()) {
@@ -277,19 +316,6 @@ The `MatMul::mm()` function automatically selects the best backend:
 1. **CUDA**: Used for large matrices when GPU is available
 2. **OpenMP + AVX-512**: CPU fallback with vectorization
 3. **Vanilla**: For very small matrices where overhead dominates
-
-#### cuBLAS Benchmarking
-
-The benchmark suite includes cuBLAS comparison when CUDA is available:
-
-```bash
-./test_benchmark 1024  # Includes cuBLAS comparison
-```
-
-cuBLAS serves as the GPU performance ceiling, similar to OpenBLAS for CPU:
-- **NVIDIA-optimized**: Highly tuned for specific GPU architectures
-- **Tensor core support**: Utilizes hardware acceleration when available
-- **Memory-efficient**: Optimized data transfer and caching strategies
 
 #### Building with CUDA
 
@@ -900,8 +926,6 @@ The benchmark results demonstrate several key principles for matrix multiplicati
 - [x] Develop Python bindings to C++ implementation
 - [x] Refactor `activation.hpp` to include SoftMax
 - [x] Add cuBLAS benchmarking
-- [ ] More performance testing on different configurations of the implementations
-- [ ] Improve performance configuration of `mm()` to be closer to OpenBLAS
 - [ ] Implement NumPy to C++ Matrix as zero-copy conversion
 - [ ] ...
 <!-- - [ ] Convolutional layers
