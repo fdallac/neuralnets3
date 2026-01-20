@@ -284,7 +284,6 @@ The project includes a heterogeneous computing implementation that leverages bot
 **Memory Hierarchy**:
 ```
 Global Memory → Shared Memory (128×8 tiles) → Registers (8×8 outputs) → Global Memory
-              coalesced loads              broadcast access        coalesced stores
 ```
 
 **Pipeline Execution**:
@@ -312,12 +311,6 @@ if (cuda_matmul::isCudaAvailable()) {
 }
 ```
 
-#### Automatic Backend Selection
-
-The `MatMul::mm()` function automatically selects the best backend:
-1. **CUDA**: Used for large matrices when GPU is available
-2. **OpenMP + AVX-512**: CPU fallback with vectorization
-3. **Vanilla**: For very small matrices where overhead dominates
 
 #### Building with CUDA
 
@@ -331,6 +324,13 @@ make
 ./test_matrix_cuda_mult
 ```
 
+#### Automatic Backend Selection
+
+By default, `MatMul::mm()` function automatically selects the best backend implementation:
+1. **Pure SIMD**: For small matrices where overhead dominates
+2. **Pure CUDA**: Used for medium to large matrices when GPU is available
+3. **CUDA + OpenMP**: For very large matrices
+2. **OpenMP + SIMD**: CPU fallback with vectorization if CUDA support is not available
 
 ### Benchmarking Results
 
@@ -370,11 +370,23 @@ The Jupyter notebook provides:
 - **Log scale plots**: Better visualization across different matrix sizes
 ![Alt text](output/benchmark/images/benchmark_img_log_scale.png)
 
-**Key Observations**:
-1. **Small matrices (< 32×32)**: Simple algorithms often faster due to overhead (thread creation cost)
-2. **Medium matrices (64-256)**: Vectorization and parallelization show clear benefits
-3. **Large matrices (> 512)**: Combined optimizations approach OpenBLAS performance
-4. **OpenBLAS**: Consistently fastest for all the matrix sizes (highly tuned)
+#### Key Observations
+The following observations were derived from a comprehensive benchmark of squared matrix multiplications ($N \times N$) comparing custom CPU and custom GPU (CUDA), and optimized library implementations (OpenBLAS, cuBLAS).
+
+1. **Small Matrices ($N < 128$)**<br>
+At this scale, the kernel launch overhead (~ $10\text{--}50\mu s$) and data transfer latency outweigh the computational benefits of the GPU.
+<br>Performance is dominated by constant overhead. **Vectorization via SIMD operations** on the CPU provides the best efficiency because it operates directly on data already residing in L1/L2 caches.
+
+
+2. **Medium matrices ($128 < N < 1024$)**<br>
+The **GPU** begins to "shine" as the workload becomes large enough to hide the initial latency of moving data to Device Memory.<br>
+This represents the crossover point where the massive parallel throughput of CUDA cores compensates for the communication cost between the Host and Device.
+
+3. **Large matrices ($N > 1024$)**<br>
+Combined optimizations utilizing **CUDA streams and OpenMP task parallelism** show maximum benefits here.
+These implementations leverage Asynchronous Overlap, allowing the system to copy the next tile of data while the current tile is being computed. Memory bandwidth management (minimizing global memory stalls) becomes the primary bottleneck.
+
+4. **Benchmarks libraries**: **cuBLAS** (NVIDIA official) is consistently the gold standard for high-performance GPU computing and show the best performance ofr any matrix size, but for very small ones. **OpenBLAS** remains faster than custom (hand-written) GPU kernels for a significant range. This mainly because OpenBLAS is "cache-aware": it is heavily tuned to ensure data stays in the CPU's L1/L2/L3 caches, whereas a custom GPU kernel may suffer from unoptimized global memory access or shared memory bank conflicts.
 
 ---
 
@@ -406,7 +418,7 @@ class NeuralNets {
 
 #### Activation Functions
 
-| Function | Forward | Derivative | Use Case |
+| Function | Forward Formula | Derivative | Use Case |
 |----------|---------|------------|----------|
 | **ReLU** | max(0, x) | 1 if x>0 else 0 | Hidden layers|
 | **LeakyReLU** | x if x>0 else 0.01x | 1 if x>0 else 0.01 | Hidden layers (preventing dead neurons) |
@@ -444,18 +456,7 @@ class NeuralNets {
 |-------|---------|------------|----------|
 | **LayerNormalization** | y = γ·((x-μ)/σ) + β | Learnable scale (γ) and shift (β) per feature | Stabilize training, reduce internal covariate shift |
 
-**LayerNormalization** normalizes across features (within each sample), making training more stable and often allowing higher learning rates. It can be optionally applied to hidden layers:
 
-```cpp
-LayerNormalization<double> ln(64);  // 64 features
-nn.add_layer(input_size, 64, relu, &ln);  // Add layer with normalization
-```
-
-Key characteristics:
-- Normalizes each sample independently (mean=0, variance=1 across features)
-- Learnable γ (scale) initialized to 1, β (shift) initialized to 0
-- Gradients automatically computed during backpropagation
-- Parameters (γ, β) updated by the optimizer
 
 #### Preprocessing Utilities
 
@@ -890,7 +891,7 @@ Predicts wine quality classes (3-9) using Softmax + Categorical Cross-Entropy wi
 
 - **Jupyter**: For benchmark visualization
   ```bash
-  pip install jupyter pandas matplotlib
+  pip install ipykernel pandas matplotlib
   ```
 
 ---
