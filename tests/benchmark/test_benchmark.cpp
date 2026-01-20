@@ -126,18 +126,18 @@ int main(int argc, char** argv) {
     std::cout << "Average time for SIMD (AVX-512) MM: " << time_avx512 << " ms\n";
 
 
-    // Benchmark Optimized matrix multiplication
-    double time_optimized = Benchmark::measure_and_report_matmul(
+    // Benchmark SIMD+OpenMP+Tile matrix multiplication
+    double time_simd_openmp_tile = Benchmark::measure_and_report_matmul(
         std::to_string(N),
-        "Optimized",
-        [&]() {Matrix<double> C = MatMul<double>::mm(A, B, MatMulMethod::Optimized);},
+        "SIMD_OpenMP_Tile",
+        [&]() {Matrix<double> C = MatMul<double>::mm(A, B, MatMulMethod::SIMD_OpenMP_Tile);},
         report_filename
     );
 
-    std::cout << "Average time for Optimized MM: " << time_optimized << " ms\n";
+    std::cout << "Average time for SIMD+OpenMP+Tile MM: " << time_simd_openmp_tile << " ms\n";
  
-    
-*/
+*/   
+
 
     // Benchmark CUDA matrix multiplication if available
 #ifdef CUDA_AVAILABLE

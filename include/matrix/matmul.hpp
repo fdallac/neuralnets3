@@ -8,7 +8,7 @@
  * - Tiled: Cache-friendly blocked multiplication
  * - SIMD_AVX512: Vectorized using AVX-512 intrinsics (float/double only)
  * - OpenMP: Parallelized using OpenMP
- * - Optimized: Combines tiling, unrolling, and OpenMP
+ * - SIMD_OpenMP_Tile: Combines tiling, SIMD, and OpenMP
  */
 
 #pragma once
@@ -41,7 +41,7 @@ enum class MatMulMethod {
     SIMD_AVX2,      ///< AVX2 vectorization (not implemented)
     SIMD_AVX512,    ///< AVX-512 vectorization (float/double only)
     OpenMP,         ///< Multi-threaded with OpenMP
-    Optimized,      ///< Best combination of optimizations
+    SIMD_OpenMP_Tile, ///< Best combination: SIMD + OpenMP + Tiling
     CUDA,           ///< GPU acceleration with CUDA
     CUDA_OpenMP     ///< Hybrid GPU + CPU parallelism
 };
@@ -65,10 +65,10 @@ public:
      * @throws std::invalid_argument if A.cols() != B.rows()
      * 
      * Dispatches to specific implementation based on method parameter.
-     * Recommended: MatMulMethod::Optimized for best performance.
+     * Recommended: MatMulMethod::SIMD_OpenMP_Tile for best performance.
      */
     static Matrix<T> mm(const Matrix<T>& A, const Matrix<T>& B,
-                 MatMulMethod method = MatMulMethod::Optimized) { 
+                 MatMulMethod method = MatMulMethod::SIMD_OpenMP_Tile) { 
                     
         switch (method) {
             case MatMulMethod::Vanilla:
@@ -92,8 +92,8 @@ public:
             case MatMulMethod::SIMD_AVX512:
                 return mm_avx512(A, B);
 
-            case MatMulMethod::Optimized:
-                return mm_optimized(A, B);
+            case MatMulMethod::SIMD_OpenMP_Tile:
+                return mm_simd_openmp_tile(A, B);
 
             case MatMulMethod::CUDA:
 #ifdef CUDA_AVAILABLE
@@ -718,9 +718,9 @@ public:
      * - tile_k: Should fit in L2 cache (64-128 typical)
      * - num_threads: Use -1 for automatic (all cores)
      *  
-     * @see mm_optimized_ptr for low-level implementation details
+     * @see mm_simd_openmp_tile_ptr for low-level implementation details
      */
-    static Matrix<T> mm_optimized(const Matrix<T>& A, const Matrix<T>& B, int num_threads = -1, size_t tile_i = 16, size_t tile_j = 16, size_t tile_k = 64) {
+    static Matrix<T> mm_simd_openmp_tile(const Matrix<T>& A, const Matrix<T>& B, int num_threads = -1, size_t tile_i = 16, size_t tile_j = 16, size_t tile_k = 64) {
         if (A.cols() != B.rows()) {
             throw std::invalid_argument("Incompatible matrix dimensions for multiplication");
         }
@@ -734,8 +734,8 @@ public:
         // Transpose B for better memory access
         Matrix<T> B_t = B.transpose();
 
-        // Optimized implementation would go here
-        mm_optimized_ptr(A.data(), B_t.data(), C.data(), M, N, K, num_threads, tile_i, tile_j, tile_k);
+        // SIMD + OpenMP + Tiled implementation
+        mm_simd_openmp_tile_ptr(A.data(), B_t.data(), C.data(), M, N, K, num_threads, tile_i, tile_j, tile_k);
 
         return C;
     }
@@ -776,7 +776,7 @@ public:
      * 
      * @note Private helper method with maximum optimization for float/double.
      */
-    static void mm_optimized_ptr(const T* A, const T* B_t, T* C, size_t M, size_t N, size_t K, int num_threads = -1, size_t tile_i = 16, size_t tile_j = 16, size_t tile_k = 64) {
+    static void mm_simd_openmp_tile_ptr(const T* A, const T* B_t, T* C, size_t M, size_t N, size_t K, int num_threads = -1, size_t tile_i = 16, size_t tile_j = 16, size_t tile_k = 64) {
         
         
 # if defined(_OPENMP)

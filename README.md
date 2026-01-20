@@ -194,17 +194,19 @@ To call it, use:
 static Matrix<T> mm_openmp(const Matrix<T> &A, const Matrix<T> &B)
 ```
 
-#### 6. **Optimized (Combined)**
+#### 6. **SIMD + OpenMP + Tiling (Combined)**
 
 - Combines multiple optimization techniques:
   - Multi-threading (OpenMP)
-  - Vectorization (AVX-512)
+  - Vectorization (AVX-512 SIMD)
   - Cache optimization (Tiling)
-- Best performance among custom implementations
+- Best performance among custom CPU implementations
 
 To call it, use:
 ```cpp
 static Matrix<T> mm(const Matrix<T> &A, const Matrix<T> &B) // default method
+// or explicitly:
+static Matrix<T> mm(const Matrix<T> &A, const Matrix<T> &B, MatMulMethod::SIMD_OpenMP_Tile)
 ```
 
 #### 7. **OpenBLAS (Reference)**
@@ -351,7 +353,7 @@ For comprehensive testing across multiple sizes:
 bash tests/run_benchmark.sh
 ```
 
-This runs benchmarks for matrix sizes: 8, 10, 16, 32, 64, 128, 200, 256, 512, 1024 and logs results to `output/benchmark/matrix_mult_benchmark_logs.csv`.
+This runs benchmarks for matrix sizes: 8, 10, 16, 32, 64, 128, 200, 256, 512, 1000 1024 2000 2048 3000 4000 4096 and logs results to `output/benchmark/matrix_mult_benchmark_logs.csv`.
 
 #### Results
 

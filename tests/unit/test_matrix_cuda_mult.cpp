@@ -289,7 +289,7 @@ TEST_F(CUDAMatrixMultiplication, VeryLargeMatrixFloat) {
     Matrix<float> B(K, N, dataB);
     
     Matrix<float> C_cuda = MatMul<float>::mm(A, B, MatMulMethod::CUDA);
-    Matrix<float> C_ref = MatMul<float>::mm(A, B, MatMulMethod::Optimized);
+    Matrix<float> C_ref = MatMul<float>::mm(A, B, MatMulMethod::SIMD_OpenMP_Tile);
     
     EXPECT_EQ(C_cuda.rows(), M);
     EXPECT_EQ(C_cuda.cols(), N);
@@ -419,7 +419,7 @@ TEST_F(CUDAMatrixMultiplication, HybridLargeMatrixFloat) {
     Matrix<float> B(K, N, dataB);
     
     Matrix<float> C_hybrid = MatMul<float>::mm(A, B, MatMulMethod::CUDA_OpenMP);
-    Matrix<float> C_ref = MatMul<float>::mm(A, B, MatMulMethod::Optimized);
+    Matrix<float> C_ref = MatMul<float>::mm(A, B, MatMulMethod::SIMD_OpenMP_Tile);
     
     EXPECT_EQ(C_hybrid.rows(), M);
     EXPECT_EQ(C_hybrid.cols(), N);
@@ -447,7 +447,7 @@ TEST_F(CUDAMatrixMultiplication, HybridLargeMatrixDouble) {
     Matrix<double> B(K, N, dataB);
     
     Matrix<double> C_hybrid = MatMul<double>::mm(A, B, MatMulMethod::CUDA_OpenMP);
-    Matrix<double> C_ref = MatMul<double>::mm(A, B, MatMulMethod::Optimized);
+    Matrix<double> C_ref = MatMul<double>::mm(A, B, MatMulMethod::SIMD_OpenMP_Tile);
     
     EXPECT_EQ(C_hybrid.rows(), M);
     EXPECT_EQ(C_hybrid.cols(), N);
@@ -475,7 +475,7 @@ TEST_F(CUDAMatrixMultiplication, HybridNonSquareTileBoundary) {
     Matrix<float> B(K, N, dataB);
     
     Matrix<float> C_hybrid = MatMul<float>::mm(A, B, MatMulMethod::CUDA_OpenMP);
-    Matrix<float> C_ref = MatMul<float>::mm(A, B, MatMulMethod::Optimized);
+    Matrix<float> C_ref = MatMul<float>::mm(A, B, MatMulMethod::SIMD_OpenMP_Tile);
     
     EXPECT_EQ(C_hybrid.rows(), M);
     EXPECT_EQ(C_hybrid.cols(), N);
@@ -532,7 +532,7 @@ TEST_F(CUDAMatrixMultiplication, HybridRectangularMatrix) {
     Matrix<double> B(K, N, dataB);
     
     Matrix<double> C_hybrid = MatMul<double>::mm(A, B, MatMulMethod::CUDA_OpenMP);
-    Matrix<double> C_ref = MatMul<double>::mm(A, B, MatMulMethod::Optimized);
+    Matrix<double> C_ref = MatMul<double>::mm(A, B, MatMulMethod::SIMD_OpenMP_Tile);
     
     EXPECT_EQ(C_hybrid.rows(), M);
     EXPECT_EQ(C_hybrid.cols(), N);

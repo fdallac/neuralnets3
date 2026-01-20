@@ -488,7 +488,7 @@ private:
 
 template<typename T>
 Matrix<T> Matrix<T>::operator*(const Matrix<T>& other) const {
-    return MatMul<T>::mm(*this, other, MatMulMethod::Optimized);
+    return MatMul<T>::mm(*this, other, MatMulMethod::SIMD_OpenMP_Tile);
 }
 
 
