@@ -2813,3 +2813,8 @@ MSCGEN_TOOL            =
 # command).
 
 MSCFILE_DIRS           =
+
+
+# If the RECURSIVE tag is set to YES, doxygen will recurse into subdirectories
+# searching for input files to process.
+RECURSIVE = YES
