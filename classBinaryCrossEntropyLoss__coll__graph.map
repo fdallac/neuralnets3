@@ -1,0 +1,5 @@
+<map id="BinaryCrossEntropyLoss&lt; T &gt;" name="BinaryCrossEntropyLoss&lt; T &gt;">
+<area shape="rect" id="Node000001" title="Binary Cross&#45;Entropy loss function." alt="" coords="5,79,199,105"/>
+<area shape="rect" id="Node000002" href="$classLoss.html" title="Abstract base class for loss functions." alt="" coords="62,5,142,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,46,105,79,99,79,99,46"/>
+</map>

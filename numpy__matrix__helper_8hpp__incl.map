@@ -1,0 +1,34 @@
+<map id="include/bindings/numpy_matrix_helper.hpp" name="include/bindings/numpy_matrix_helper.hpp">
+<area shape="rect" id="Node000001" title="Zero&#45;copy conversion utilities between NumPy arrays and C++ Matrix." alt="" coords="150,5,307,46"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,94,143,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,49,112,89,110,84,189,44"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="166,94,291,120"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,46,231,78,226,78,226,46"/>
+<area shape="rect" id="Node000004" href="$matrix_8hpp.html" title="Dense matrix class with linear algebra operations." alt="" coords="314,94,434,120"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="266,44,340,84,337,89,264,49"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="63,241,120,267"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="348,123,247,170,126,236,124,231,245,165,346,118"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="145,241,222,267"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="355,122,284,170,208,233,205,229,280,166,352,118"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="246,241,318,267"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="352,122,324,142,300,169,289,197,285,226,280,226,284,196,296,166,321,138,349,118"/>
+<area shape="rect" id="Node000008" href="$matmul_8hpp.html" title="Multiple implementations of matrix multiplication." alt="" coords="462,168,590,193"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="394,118,480,159,478,163,392,123"/>
+<area shape="rect" id="Node000010" href="$iohelper_8hpp.html" title="CSV input/output utilities for matrices." alt="" coords="309,168,439,193"/>
+<area shape="poly" id="edge10_Node000004_Node000010" title=" " alt="" coords="370,120,368,152,363,152,364,120"/>
+<area shape="poly" id="edge8_Node000008_Node000004" title=" " alt="" coords="506,169,420,129,422,124,508,165"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="705,241,790,267"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="564,191,696,234,695,239,563,196"/>
+<area shape="poly" id="edge11_Node000010_Node000004" title=" " alt="" coords="378,167,380,135,385,135,384,167"/>
+<area shape="poly" id="edge12_Node000010_Node000005" title=" " alt="" coords="324,197,136,243,135,238,322,191"/>
+<area shape="poly" id="edge13_Node000010_Node000006" title=" " alt="" coords="343,196,231,238,229,233,341,191"/>
+<area shape="poly" id="edge16_Node000010_Node000007" title=" " alt="" coords="360,196,311,234,308,230,357,192"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="341,241,407,267"/>
+<area shape="poly" id="edge14_Node000010_Node000011" title=" " alt="" coords="377,194,377,226,371,226,371,194"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="430,241,499,267"/>
+<area shape="poly" id="edge15_Node000010_Node000012" title=" " alt="" coords="391,192,439,230,436,234,388,196"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="524,241,598,267"/>
+<area shape="poly" id="edge17_Node000010_Node000013" title=" " alt="" coords="407,191,516,233,514,238,405,196"/>
+<area shape="rect" id="Node000014" title=" " alt="" coords="622,241,681,267"/>
+<area shape="poly" id="edge18_Node000010_Node000014" title=" " alt="" coords="424,191,607,238,606,243,423,196"/>
+</map>

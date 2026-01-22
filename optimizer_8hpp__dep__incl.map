@@ -1,0 +1,8 @@
+<map id="include/neuralnets/optimizer.hpp" name="include/neuralnets/optimizer.hpp">
+<area shape="rect" id="Node000001" title="Optimization algorithms for neural network training." alt="" coords="30,5,157,46"/>
+<area shape="rect" id="Node000002" href="$pynn3_8hpp.html" title="High&#45;level Python interface for NeuralNets." alt="" coords="5,183,182,208"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="81,61,72,95,70,114,72,134,80,160,90,181,85,183,75,161,67,135,64,114,67,93,76,60"/>
+<area shape="rect" id="Node000003" href="$neuralnets_8hpp.html" title="Neural network implementation with backpropagation." alt="" coords="81,94,207,135"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="115,58,135,92,130,95,110,61"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="126,149,104,184,99,181,121,146"/>
+</map>

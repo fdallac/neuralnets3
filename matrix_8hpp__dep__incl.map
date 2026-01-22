@@ -1,0 +1,35 @@
+<map id="include/matrix/matrix.hpp" name="include/matrix/matrix.hpp">
+<area shape="rect" id="Node000001" title="Dense matrix class with linear algebra operations." alt="" coords="668,5,832,31"/>
+<area shape="rect" id="Node000002" href="$numpy__matrix__helper_8hpp.html" title="Zero&#45;copy conversion utilities between NumPy arrays and C++ Matrix." alt="" coords="5,168,162,208"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="652,24,496,29,319,39,168,56,116,68,89,81,78,100,74,123,80,167,75,167,69,123,73,98,86,77,115,63,167,51,318,34,496,24,652,19"/>
+<area shape="rect" id="Node000004" href="$iohelper_8hpp.html" title="CSV input/output utilities for matrices." alt="" coords="751,86,925,112"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="769,40,820,84,816,88,766,44"/>
+<area shape="rect" id="Node000005" href="$matmul_8hpp.html" title="Multiple implementations of matrix multiplication." alt="" coords="949,86,1122,112"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="803,33,985,83,984,88,801,38"/>
+<area shape="rect" id="Node000006" href="$activation_8hpp.html" title="Activation functions for neural networks." alt="" coords="99,79,225,120"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="653,30,463,50,244,82,226,85,225,80,243,76,462,45,652,25"/>
+<area shape="rect" id="Node000007" href="$neuralnets_8hpp.html" title="Neural network implementation with backpropagation." alt="" coords="299,168,425,208"/>
+<area shape="poly" id="edge15_Node000001_Node000007" title=" " alt="" coords="653,28,431,48,337,63,306,72,289,81,283,91,282,101,291,124,311,146,334,165,331,169,307,150,287,127,277,102,278,89,286,77,304,67,336,58,430,43,652,23"/>
+<area shape="rect" id="Node000008" href="$loss_8hpp.html" title="Loss functions for neural network training." alt="" coords="450,79,576,120"/>
+<area shape="poly" id="edge11_Node000001_Node000008" title=" " alt="" coords="700,39,573,81,571,76,699,34"/>
+<area shape="rect" id="Node000009" href="$metrics_8hpp.html" title="Evaluation metrics for model performance." alt="" coords="1146,79,1272,120"/>
+<area shape="poly" id="edge14_Node000001_Node000009" title=" " alt="" coords="848,29,985,49,1135,76,1146,79,1145,84,1134,82,984,55,848,35"/>
+<area shape="rect" id="Node000010" href="$normalization_8hpp_source.html" title=" " alt="" coords="299,79,425,120"/>
+<area shape="poly" id="edge16_Node000001_Node000010" title=" " alt="" coords="666,37,439,82,427,84,425,79,438,76,665,32"/>
+<area shape="rect" id="Node000011" href="$optimizer_8hpp.html" title="Optimization algorithms for neural network training." alt="" coords="600,79,727,120"/>
+<area shape="poly" id="edge18_Node000001_Node000011" title=" " alt="" coords="728,44,687,81,683,77,724,40"/>
+<area shape="rect" id="Node000012" href="$preprocessing_8hpp.html" title="Data preprocessing utilities for neural networks." alt="" coords="1296,79,1426,120"/>
+<area shape="poly" id="edge21_Node000001_Node000012" title=" " alt="" coords="848,24,1049,43,1167,58,1284,76,1296,79,1295,84,1283,82,1166,63,1049,49,847,29"/>
+<area shape="rect" id="Node000003" href="$pynn3_8hpp.html" title="High&#45;level Python interface for NeuralNets." alt="" coords="274,256,450,282"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="168,210,320,253,318,258,167,216"/>
+<area shape="poly" id="edge4_Node000004_Node000001" title=" " alt="" coords="819,77,768,33,772,29,822,73"/>
+<area shape="poly" id="edge6_Node000005_Node000001" title=" " alt="" coords="983,84,800,34,802,29,984,79"/>
+<area shape="poly" id="edge8_Node000006_Node000003" title=" " alt="" coords="197,128,289,206,348,254,345,258,286,210,194,132"/>
+<area shape="poly" id="edge9_Node000006_Node000007" title=" " alt="" coords="223,124,318,165,316,170,220,129"/>
+<area shape="poly" id="edge10_Node000007_Node000003" title=" " alt="" coords="365,224,365,256,360,256,360,224"/>
+<area shape="poly" id="edge12_Node000008_Node000003" title=" " alt="" coords="496,135,470,172,439,210,409,237,382,258,378,254,406,233,435,206,466,169,491,132"/>
+<area shape="poly" id="edge13_Node000008_Node000007" title=" " alt="" coords="467,130,398,170,395,165,465,125"/>
+<area shape="poly" id="edge17_Node000010_Node000007" title=" " alt="" coords="365,135,365,167,360,167,360,135"/>
+<area shape="poly" id="edge19_Node000011_Node000003" title=" " alt="" coords="617,130,473,211,386,258,383,253,470,206,615,125"/>
+<area shape="poly" id="edge20_Node000011_Node000007" title=" " alt="" coords="586,125,426,171,425,166,585,120"/>
+</map>

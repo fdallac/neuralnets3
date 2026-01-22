@@ -1,0 +1,33 @@
+<map id="include/neuralnets/metrics.hpp" name="include/neuralnets/metrics.hpp">
+<area shape="rect" id="Node000001" title="Evaluation metrics for model performance." alt="" coords="615,5,741,46"/>
+<area shape="rect" id="Node000002" href="$matrix_8hpp.html" title="Dense matrix class with linear algebra operations." alt="" coords="268,94,387,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="615,44,397,93,395,88,614,39"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="675,241,732,267"/>
+<area shape="poly" id="edge17_Node000001_Node000003" title=" " alt="" coords="683,46,703,225,698,226,678,47"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="716,94,774,120"/>
+<area shape="poly" id="edge18_Node000001_Node000013" title=" " alt="" coords="697,45,727,80,723,83,693,48"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="360,118,661,234,659,239,358,123"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="114,241,192,267"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="315,122,180,233,177,229,312,118"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="216,241,287,267"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="324,121,267,229,262,226,319,119"/>
+<area shape="rect" id="Node000006" href="$matmul_8hpp.html" title="Multiple implementations of matrix multiplication." alt="" coords="60,168,187,193"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="287,123,166,164,165,159,285,118"/>
+<area shape="rect" id="Node000008" href="$iohelper_8hpp.html" title="CSV input/output utilities for matrices." alt="" coords="314,168,443,193"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="331,118,355,154,351,157,327,121"/>
+<area shape="poly" id="edge6_Node000006_Node000002" title=" " alt="" coords="164,165,285,123,287,128,166,170"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="5,241,90,267"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="112,196,73,233,69,229,109,192"/>
+<area shape="poly" id="edge9_Node000008_Node000002" title=" " alt="" coords="374,169,350,133,355,130,379,166"/>
+<area shape="poly" id="edge10_Node000008_Node000003" title=" " alt="" coords="444,191,660,238,659,243,443,197"/>
+<area shape="poly" id="edge11_Node000008_Node000004" title=" " alt="" coords="341,196,206,239,205,234,339,191"/>
+<area shape="poly" id="edge14_Node000008_Node000005" title=" " alt="" coords="358,196,287,236,285,231,355,192"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="494,241,559,267"/>
+<area shape="poly" id="edge12_Node000008_Node000009" title=" " alt="" coords="404,191,488,232,486,237,402,196"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="583,241,651,267"/>
+<area shape="poly" id="edge13_Node000008_Node000010" title=" " alt="" coords="419,191,568,236,567,241,418,196"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="312,241,386,267"/>
+<area shape="poly" id="edge15_Node000008_Node000011" title=" " alt="" coords="376,195,362,228,357,226,371,193"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="410,241,469,267"/>
+<area shape="poly" id="edge16_Node000008_Node000012" title=" " alt="" coords="390,192,421,228,417,231,386,195"/>
+</map>

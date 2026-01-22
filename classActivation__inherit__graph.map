@@ -1,0 +1,15 @@
+<map id="Activation&lt; T &gt;" name="Activation&lt; T &gt;">
+<area shape="rect" id="Node000001" title="Abstract base class for activation functions." alt="" coords="307,5,416,31"/>
+<area shape="rect" id="Node000002" href="$classLeakyReLU.html" title="Leaky Rectified Linear Unit (LeakyReLU) activation function." alt="" coords="5,79,126,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="297,38,116,81,115,76,296,33"/>
+<area shape="rect" id="Node000003" href="$classLinear.html" title="Linear (Identity) activation function." alt="" coords="150,79,237,105"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="320,40,223,81,221,76,318,35"/>
+<area shape="rect" id="Node000004" href="$classReLU.html" title="Rectified Linear Unit (ReLU) activation function." alt="" coords="262,79,347,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="345,45,316,80,312,77,340,41"/>
+<area shape="rect" id="Node000005" href="$classSigmoid.html" title="Sigmoid activation function." alt="" coords="371,79,469,105"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="383,41,412,77,408,80,379,45"/>
+<area shape="rect" id="Node000006" href="$classSoftmax.html" title="Softmax activation function." alt="" coords="493,79,592,105"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="407,35,513,76,511,81,406,40"/>
+<area shape="rect" id="Node000007" href="$classTanh.html" title="Hyperbolic Tangent (Tanh) activation function." alt="" coords="616,79,696,105"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="427,33,616,78,615,83,426,38"/>
+</map>

@@ -1,0 +1,28 @@
+<map id="include/matrix/matmul.hpp" name="include/matrix/matmul.hpp">
+<area shape="rect" id="Node000001" title="Multiple implementations of matrix multiplication." alt="" coords="118,5,291,31"/>
+<area shape="rect" id="Node000002" href="$matrix_8hpp.html" title="Dense matrix class with linear algebra operations." alt="" coords="145,79,264,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="200,31,199,64,193,63,195,31"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="288,79,372,105"/>
+<area shape="poly" id="edge15_Node000001_Node000011" title=" " alt="" coords="227,29,297,69,294,73,225,34"/>
+<area shape="poly" id="edge5_Node000002_Node000001" title=" " alt="" coords="209,78,211,46,216,46,214,79"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,226,63,252"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="192,107,62,218,58,214,189,103"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="87,226,165,252"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="201,106,142,214,137,211,196,104"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="189,226,260,252"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="209,105,224,211,218,211,204,105"/>
+<area shape="rect" id="Node000006" href="$iohelper_8hpp.html" title="CSV input/output utilities for matrices." alt="" coords="243,153,372,178"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="217,103,272,142,268,146,214,107"/>
+<area shape="poly" id="edge7_Node000006_Node000002" title=" " alt="" coords="296,154,240,115,244,111,299,150"/>
+<area shape="poly" id="edge8_Node000006_Node000003" title=" " alt="" coords="259,182,78,228,77,223,258,176"/>
+<area shape="poly" id="edge9_Node000006_Node000004" title=" " alt="" coords="278,181,172,223,170,218,276,176"/>
+<area shape="poly" id="edge12_Node000006_Node000005" title=" " alt="" coords="295,181,252,218,248,214,292,177"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="559,226,624,252"/>
+<area shape="poly" id="edge10_Node000006_Node000007" title=" " alt="" coords="357,176,544,223,543,228,356,182"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="284,226,352,252"/>
+<area shape="poly" id="edge11_Node000006_Node000008" title=" " alt="" coords="312,178,317,211,311,211,306,179"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="377,226,451,252"/>
+<area shape="poly" id="edge13_Node000006_Node000009" title=" " alt="" coords="327,177,385,215,382,220,324,181"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="475,226,534,252"/>
+<area shape="poly" id="edge14_Node000006_Node000010" title=" " alt="" coords="342,176,462,220,460,225,340,181"/>
+</map>
